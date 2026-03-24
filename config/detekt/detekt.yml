@@ -1,0 +1,50 @@
+complexity:
+  LongParameterList:
+    active: true
+    ignoreAnnotated:
+      - 'Composable'
+  LongMethod:
+    active: true
+    ignoreAnnotated:
+      - 'Composable'
+  CyclomaticComplexMethod:
+    active: true
+    ignoreAnnotated:
+      - 'Composable'
+
+naming:
+  FunctionNaming:
+    active: true
+    ignoreAnnotated:
+      - 'Composable'
+
+style:
+  MagicNumber:
+    active: true
+    ignoreAnnotated:
+      - 'Composable'
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '255'
+    ignorePropertyDeclaration: true
+  MaxLineLength:
+    active: true
+    maxLineLength: 140
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+    exceptionNames:
+      - Error
+      - Exception
+      - Throwable
+      - RuntimeException
+    ignoreAnnotated:
+      - 'Composable'
+  SwallowedException:
+    active: true
+    ignoreAnnotated:
+      - 'Composable'
