@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 android {
@@ -83,7 +84,8 @@ dependencies {
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 
-    implementation(libs.gson)
+    implementation(libs.guava)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
