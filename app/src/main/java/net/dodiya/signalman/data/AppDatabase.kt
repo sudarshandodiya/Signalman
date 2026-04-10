@@ -6,21 +6,16 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Rule::class], version = 1, exportSchema = false)
+@Database(entities = [Rule::class], version = 1, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun ruleDao(): RuleDao
 
     companion object {
-        @Volatile
-        private var instance: AppDatabase? = null
-
         fun getDatabase(context: Context): AppDatabase =
-            instance ?: synchronized(this) {
-                Room.databaseBuilder(context, AppDatabase::class.java, "signalman_database")
-                    .fallbackToDestructiveMigration(false)
-                    .build()
-                    .also { instance = it }
-            }
+            Room
+                .databaseBuilder(context, AppDatabase::class.java, "signalman_database")
+                .fallbackToDestructiveMigration(false)
+                .build()
     }
 }
