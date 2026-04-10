@@ -13,16 +13,18 @@ enum class MatchType {
     EQUALS,
     STARTS_WITH,
     ENDS_WITH,
-    REGEX;
+    REGEX,
+    ;
 
     val userFriendlyName: String
-        get() = when (this) {
-            CONTAINS -> "Contains"
-            EQUALS -> "Equals"
-            STARTS_WITH -> "Starts with"
-            ENDS_WITH -> "Ends with"
-            REGEX -> "Regex"
-        }
+        get() =
+            when (this) {
+                CONTAINS -> "Contains"
+                EQUALS -> "Equals"
+                STARTS_WITH -> "Starts with"
+                ENDS_WITH -> "Ends with"
+                REGEX -> "Regex"
+            }
 }
 
 @Serializable
@@ -99,8 +101,7 @@ class Converters {
     fun toFilterList(value: String): List<Filter> = json.decodeFromString(value)
 
     @TypeConverter
-    fun fromUrlComponentReplacementList(value: List<UrlComponentReplacement>): String =
-        json.encodeToString(value)
+    fun fromUrlComponentReplacementList(value: List<UrlComponentReplacement>): String = json.encodeToString(value)
 
     @TypeConverter
     fun toUrlComponentReplacementList(value: String): List<UrlComponentReplacement> {

@@ -17,26 +17,30 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
-val dataModule = module {
-    single { AppDatabase.getDatabase(androidContext()) }
-    single { get<AppDatabase>().ruleDao() }
-    singleOf(::PreferenceManager)
-    singleOf(::RuleRepositoryImpl) { bind<RuleRepository>() }
-}
+val dataModule =
+    module {
+        single { AppDatabase.getDatabase(androidContext()) }
+        single { get<AppDatabase>().ruleDao() }
+        singleOf(::PreferenceManager)
+        singleOf(::RuleRepositoryImpl) { bind<RuleRepository>() }
+    }
 
-val useCasesModule = module {
-    singleOf(::MatchRuleUseCase)
-    singleOf(::TransformUrlUseCase)
-    singleOf(::CreateAutoRuleUseCase)
-}
+val useCasesModule =
+    module {
+        singleOf(::MatchRuleUseCase)
+        singleOf(::TransformUrlUseCase)
+        singleOf(::CreateAutoRuleUseCase)
+    }
 
-val viewModelModule = module {
-    viewModelOf(::RuleViewModel)
-    viewModelOf(::EditRuleViewModel)
-    viewModelOf(::RoutingViewModel)
-    viewModelOf(::SettingsViewModel)
-}
+val viewModelModule =
+    module {
+        viewModelOf(::RuleViewModel)
+        viewModelOf(::EditRuleViewModel)
+        viewModelOf(::RoutingViewModel)
+        viewModelOf(::SettingsViewModel)
+    }
 
-val appModule = module {
-    includes(dataModule, useCasesModule, viewModelModule)
-}
+val appModule =
+    module {
+        includes(dataModule, useCasesModule, viewModelModule)
+    }

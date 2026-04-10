@@ -69,13 +69,12 @@ data class UrlComponents(
             )
         }
 
-        fun parse(urlString: String): UrlComponents? {
-            return try {
+        fun parse(urlString: String): UrlComponents? =
+            try {
                 val javaUri = URI(urlString)
                 fromUri(Uri.parse(javaUri.toString()))
             } catch (e: Exception) {
                 null
             }
-        }
     }
 }
