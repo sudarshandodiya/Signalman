@@ -12,54 +12,52 @@ class TransformUrlUseCase {
         uri: Uri,
         rule: Rule,
     ): Uri {
-        if (!rule.isTransformEnabled) {
-            return uri
-        }
+        return when (val transformMode = rule.transformMode) {
+            is TransformMode.Simple -> {
+                val pattern = transformMode.replacePattern
+                val replacement = transformMode.replacement
 
-        if (rule.transformMode == TransformMode.SIMPLE) {
-            val enabledReplacements = rule.urlComponentReplacements.filter { it.isEnabled }
-            if (enabledReplacements.isNotEmpty()) {
-                val components = UrlComponents.fromUri(uri)
-                var currentComponents = components
-
-                enabledReplacements.forEach { replacement ->
-                    currentComponents =
-                        when (replacement.component) {
-                            UrlComponent.SCHEME -> currentComponents.copy(scheme = replacement.replacement)
-                            UrlComponent.HOST -> currentComponents.copy(host = replacement.replacement)
-                            UrlComponent.DOMAIN -> currentComponents.copy(domain = replacement.replacement)
-                            UrlComponent.PORT -> currentComponents.copy(port = replacement.replacement)
-                            UrlComponent.PATH -> currentComponents.copy(path = replacement.replacement)
-                            UrlComponent.QUERY -> currentComponents.copy(query = replacement.replacement)
-                            UrlComponent.FRAGMENT -> currentComponents.copy(fragment = replacement.replacement)
-                            UrlComponent.USER_INFO -> currentComponents.copy(userInfo = replacement.replacement)
-                        }
+                if (pattern.isEmpty() || replacement.isEmpty()) {
+                    return uri
                 }
-                return currentComponents.toUri()
-            }
-            return uri
-        }
 
-        if (rule.transformMode == TransformMode.ADVANCED) {
-            if (rule.replacePattern.isNullOrEmpty() || rule.replacement == null) {
-                return uri
-            }
+                val matchType = rule.filters.firstOrNull()?.matchType ?: MatchType.REGEX
 
-            return try {
-                val urlString = uri.toString()
-                val newUrl =
-                    if (rule.matchType == MatchType.REGEX) {
-                        urlString.replace(Regex(rule.replacePattern), rule.replacement)
+                try {
+                    val urlString = uri.toString()
+                    if (matchType == MatchType.REGEX) {
+                        Uri.parse(urlString.replace(Regex(pattern), replacement))
                     } else {
-                        urlString.replace(rule.replacePattern, rule.replacement)
+                        Uri.parse(urlString.replace(pattern, replacement))
                     }
-                Uri.parse(newUrl)
-            } catch (e: Exception) {
-                android.util.Log.e("TransformUrlUseCase", "Error applying rule transformation", e)
-                uri
+                } catch (e: Exception) {
+                    android.util.Log.e("TransformUrlUseCase", "Error applying rule transformation", e)
+                    uri
+                }
+            }
+
+            is TransformMode.Advanced -> {
+                val enabledReplacements =
+                    transformMode.urlComponentReplacements
+                        .filter { it.isEnabled }
+                        .associate { it.component to it.replacement }
+
+                if (enabledReplacements.isEmpty()) {
+                    return uri
+                }
+
+                val original = UrlComponents.fromUri(uri)
+                UrlComponents(
+                    scheme = enabledReplacements[UrlComponent.SCHEME] ?: original.scheme,
+                    host = enabledReplacements[UrlComponent.HOST] ?: original.host,
+                    domain = enabledReplacements[UrlComponent.DOMAIN] ?: original.domain,
+                    port = enabledReplacements[UrlComponent.PORT] ?: original.port,
+                    path = enabledReplacements[UrlComponent.PATH] ?: original.path,
+                    query = enabledReplacements[UrlComponent.QUERY] ?: original.query,
+                    fragment = enabledReplacements[UrlComponent.FRAGMENT] ?: original.fragment,
+                    userInfo = enabledReplacements[UrlComponent.USER_INFO] ?: original.userInfo,
+                ).toUri()
             }
         }
-
-        return uri
     }
 }

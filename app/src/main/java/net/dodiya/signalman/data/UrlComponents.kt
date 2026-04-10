@@ -33,29 +33,27 @@ data class UrlComponents(
     companion object {
         fun fromUri(uri: Uri): UrlComponents {
             val fullHost = uri.host ?: ""
-            val hostPart: String
-            val domainPart: String
 
-            try {
-                val internetDomain = InternetDomainName.from(fullHost)
-                if (internetDomain.hasParent()) {
-                    val topPrivateDomain = internetDomain.topPrivateDomain()
-                    val dotIndex = fullHost.indexOf('.' + topPrivateDomain.publicSuffix())
-                    if (dotIndex > 0) {
-                        hostPart = fullHost.substring(0, dotIndex)
-                        domainPart = fullHost.substring(dotIndex + 1)
+            val (hostPart, domainPart) =
+                try {
+                    val internetDomain = InternetDomainName.from(fullHost)
+                    if (internetDomain.hasParent()) {
+                        val topPrivateDomain = internetDomain.topPrivateDomain()
+                        val publicSuffixDomain: InternetDomainName? = topPrivateDomain.publicSuffix()
+                        val publicSuffix: String = publicSuffixDomain?.toString() ?: ""
+                        val suffixWithDot = ".$publicSuffix"
+                        val dotIndex: Int = fullHost.indexOf(suffixWithDot)
+                        if (dotIndex > 0 && publicSuffix.isNotEmpty()) {
+                            Pair(fullHost.substring(0, dotIndex), fullHost.substring(dotIndex + 1))
+                        } else {
+                            Pair("", fullHost)
+                        }
                     } else {
-                        hostPart = ""
-                        domainPart = fullHost
+                        Pair("", fullHost)
                     }
-                } else {
-                    hostPart = ""
-                    domainPart = fullHost
+                } catch (e: Exception) {
+                    Pair(fullHost, "")
                 }
-            } catch (e: Exception) {
-                hostPart = fullHost
-                domainPart = ""
-            }
 
             return UrlComponents(
                 scheme = uri.scheme ?: "",
