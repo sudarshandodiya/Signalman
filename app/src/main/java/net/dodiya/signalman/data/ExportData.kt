@@ -1,46 +1,41 @@
 package net.dodiya.signalman.data
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
+@Serializable
 data class ExportData(
-    @SerializedName("version")
+    @SerialName("version")
     val version: Int = 1,
-    @SerializedName("exported_at")
+    @SerialName("exported_at")
     val exportedAt: Long = System.currentTimeMillis(),
-    @SerializedName("app_name")
+    @SerialName("app_name")
     val appName: String = "Signalman",
-    @SerializedName("rules")
+    @SerialName("rules")
     val rules: List<ExportedRule>,
 )
 
+@Serializable
 data class ExportedRule(
-    @SerializedName("name")
+    @SerialName("name")
     val name: String,
-    @SerializedName("filters")
+    @SerialName("filters")
     val filters: List<Filter>,
-    @SerializedName("logical_operator")
+    @SerialName("logical_operator")
     val logicalOperator: LogicalOperator,
-    @SerializedName("target_package")
-    val targetPackage: String?,
-    @SerializedName("is_transform_enabled")
-    val isTransformEnabled: Boolean,
-    @SerializedName("replace_pattern")
-    val replacePattern: String?,
-    @SerializedName("replacement")
-    val replacement: String?,
-    @SerializedName("url_component_replacements")
-    val urlComponentReplacements: List<UrlComponentReplacement>,
-    @SerializedName("transform_mode")
+    @SerialName("target_package")
+    val targetPackage: String,
+    @SerialName("transform_mode")
     val transformMode: TransformMode,
-    @SerializedName("description")
+    @SerialName("description")
     val description: String,
-    @SerializedName("is_enabled")
+    @SerialName("is_enabled")
     val isEnabled: Boolean,
-    @SerializedName("priority")
+    @SerialName("priority")
     val priority: Int,
-    @SerializedName("example_url")
+    @SerialName("example_url")
     val exampleUrl: String?,
 ) {
     fun toRule(): Rule =
@@ -50,10 +45,6 @@ data class ExportedRule(
             filters = filters,
             logicalOperator = logicalOperator,
             targetPackage = targetPackage,
-            isTransformEnabled = isTransformEnabled,
-            replacePattern = replacePattern,
-            replacement = replacement,
-            urlComponentReplacements = urlComponentReplacements,
             transformMode = transformMode,
             description = description,
             isEnabled = isEnabled,
@@ -69,10 +60,6 @@ data class ExportedRule(
                 filters = rule.filters,
                 logicalOperator = rule.logicalOperator,
                 targetPackage = rule.targetPackage,
-                isTransformEnabled = rule.isTransformEnabled,
-                replacePattern = rule.replacePattern,
-                replacement = rule.replacement,
-                urlComponentReplacements = rule.urlComponentReplacements,
                 transformMode = rule.transformMode,
                 description = rule.description,
                 isEnabled = rule.isEnabled,
@@ -83,17 +70,17 @@ data class ExportedRule(
 }
 
 object RuleExporter {
-    private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
+    private val json = Json { prettyPrint = true }
 
     fun exportRules(rules: List<Rule>): String {
         val exportedRules = rules.map { ExportedRule.fromRule(it) }
         val exportData = ExportData(rules = exportedRules)
-        return gson.toJson(exportData)
+        return json.encodeToString(exportData)
     }
 
-    fun importRules(json: String): List<Rule>? =
+    fun importRules(jsonString: String): List<Rule>? =
         try {
-            val exportData = gson.fromJson(json, ExportData::class.java)
+            val exportData: ExportData = json.decodeFromString(jsonString)
             exportData.rules.map { it.toRule() }
         } catch (e: Exception) {
             null
