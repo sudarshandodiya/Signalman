@@ -56,13 +56,6 @@ android {
     }
 }
 
-configurations.all {
-    resolutionStrategy {
-        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.3")
-    }
-}
-
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -86,9 +79,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     // Navigation
-    implementation(libs.androidx.navigation.compose) {
-        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-bom")
-    }
+    implementation(libs.androidx.navigation.compose)
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
