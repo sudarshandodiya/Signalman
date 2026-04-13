@@ -1,6 +1,8 @@
 package net.dodiya.signalman.data
 
 import android.net.Uri
+import com.google.common.net.InternetDomainName
+import java.net.URI
 
 data class UrlComponents(
     val scheme: String = "",
@@ -26,29 +28,32 @@ data class UrlComponents(
             .build()
     }
 
-    fun isEmpty(): Boolean =
-        scheme.isEmpty() &&
-            host.isEmpty() &&
-            domain.isEmpty() &&
-            port.isEmpty() &&
-            path.isEmpty() &&
-            query.isEmpty() &&
-            fragment.isEmpty() &&
-            userInfo.isEmpty()
+    fun isEmpty() = this == UrlComponents()
 
     companion object {
         fun fromUri(uri: Uri): UrlComponents {
             val fullHost = uri.host ?: ""
-            val lastDotIndex = fullHost.lastIndexOf('.')
-            val hostPart: String
-            val domainPart: String
-            if (lastDotIndex != -1) {
-                hostPart = fullHost.substring(0, lastDotIndex)
-                domainPart = fullHost.substring(lastDotIndex + 1)
-            } else {
-                hostPart = fullHost
-                domainPart = ""
-            }
+
+            val (hostPart, domainPart) =
+                try {
+                    val internetDomain = InternetDomainName.from(fullHost)
+                    if (internetDomain.hasParent()) {
+                        val topPrivateDomain = internetDomain.topPrivateDomain()
+                        val publicSuffixDomain: InternetDomainName? = topPrivateDomain.publicSuffix()
+                        val publicSuffix: String = publicSuffixDomain?.toString() ?: ""
+                        val suffixWithDot = ".$publicSuffix"
+                        val dotIndex: Int = fullHost.indexOf(suffixWithDot)
+                        if (dotIndex > 0 && publicSuffix.isNotEmpty()) {
+                            Pair(fullHost.substring(0, dotIndex), fullHost.substring(dotIndex + 1))
+                        } else {
+                            Pair("", fullHost)
+                        }
+                    } else {
+                        Pair("", fullHost)
+                    }
+                } catch (e: Exception) {
+                    Pair(fullHost, "")
+                }
 
             return UrlComponents(
                 scheme = uri.scheme ?: "",
@@ -64,29 +69,10 @@ data class UrlComponents(
 
         fun parse(urlString: String): UrlComponents? =
             try {
-                fromUri(Uri.parse(urlString))
+                val javaUri = URI(urlString)
+                fromUri(Uri.parse(javaUri.toString()))
             } catch (e: Exception) {
                 null
             }
     }
-}
-
-data class UrlComponentReplacement(
-    val component: UrlComponent,
-    val replacement: String,
-    val isEnabled: Boolean = true,
-)
-
-enum class UrlComponent(
-    val displayName: String,
-    val description: String,
-) {
-    SCHEME("Scheme", "e.g., https, http, ftp"),
-    HOST("Host", "e.g., google, youtube"),
-    DOMAIN("Domain", "e.g., com, net, org"),
-    PORT("Port", "e.g., 8080, 443"),
-    PATH("Path", "e.g., /watch, /videos/123"),
-    QUERY("Query", "e.g., v=abc123&t=60"),
-    FRAGMENT("Fragment", "e.g., section1, timestamp"),
-    USER_INFO("User Info", "e.g., user:password"),
 }

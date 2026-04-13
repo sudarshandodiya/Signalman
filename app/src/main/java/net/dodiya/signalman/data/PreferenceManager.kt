@@ -23,8 +23,6 @@ class PreferenceManager(
         private val KEY_GLOBAL_DEFAULT_PACKAGE = stringPreferencesKey("global_default_package")
         private val KEY_AUTO_RULE_GENERATION_ENABLED = booleanPreferencesKey("auto_rule_generation_enabled")
         private val KEY_HIDDEN_BROWSERS = stringSetPreferencesKey("hidden_browsers")
-        private const val ALWAYS_CHOICE_URL_PREFIX = "always_choice_url_"
-        private const val ALWAYS_CHOICE_DOMAIN_PREFIX = "always_choice_domain_"
     }
 
     val hiddenBrowsers: Flow<Set<String>> =
@@ -70,36 +68,6 @@ class PreferenceManager(
     suspend fun setAutoRuleGenerationEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[KEY_AUTO_RULE_GENERATION_ENABLED] = enabled
-        }
-    }
-
-    fun getAlwaysChoiceForUrl(url: String): Flow<String?> =
-        context.dataStore.data
-            .map { preferences ->
-                preferences[stringPreferencesKey(ALWAYS_CHOICE_URL_PREFIX + url)]
-            }
-
-    suspend fun setAlwaysChoiceForUrl(
-        url: String,
-        packageName: String,
-    ) {
-        context.dataStore.edit { preferences ->
-            preferences[stringPreferencesKey(ALWAYS_CHOICE_URL_PREFIX + url)] = packageName
-        }
-    }
-
-    fun getAlwaysChoiceForDomain(domain: String): Flow<String?> =
-        context.dataStore.data
-            .map { preferences ->
-                preferences[stringPreferencesKey(ALWAYS_CHOICE_DOMAIN_PREFIX + domain)]
-            }
-
-    suspend fun setAlwaysChoiceForDomain(
-        domain: String,
-        packageName: String,
-    ) {
-        context.dataStore.edit { preferences ->
-            preferences[stringPreferencesKey(ALWAYS_CHOICE_DOMAIN_PREFIX + domain)] = packageName
         }
     }
 }
