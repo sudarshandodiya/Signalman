@@ -5,6 +5,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import net.dodiya.signalman.ui.editrule.EditRuleEvent
+import net.dodiya.signalman.ui.editrule.EditRuleScreen
+import net.dodiya.signalman.ui.editrule.EditRuleUiState
 import net.dodiya.signalman.data.Filter
 import net.dodiya.signalman.data.MatchType
 import org.junit.Rule
