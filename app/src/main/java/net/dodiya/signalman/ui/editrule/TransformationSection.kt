@@ -58,6 +58,7 @@ fun TransformationSection(
     previewTransformedUrl: String?,
     urlComponentReplacements: List<UrlComponentReplacement>,
     transformMode: TransformMode,
+    modifier: Modifier = Modifier,
 ) {
     val parsedComponents =
         remember(exampleUrl) {
@@ -70,7 +71,7 @@ fun TransformationSection(
 
     Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
     ) {

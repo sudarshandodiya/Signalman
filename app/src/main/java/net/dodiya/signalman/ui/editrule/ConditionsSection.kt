@@ -47,10 +47,11 @@ fun ConditionsSection(
     onEvent: (EditRuleEvent) -> Unit,
     logicalOperator: LogicalOperator,
     individualMatches: List<Boolean?>,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
     ) {

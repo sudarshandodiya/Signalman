@@ -28,9 +28,10 @@ fun LivePreviewHeader(
     exampleUrl: String,
     isMatch: Boolean,
     transformedUrl: String?,
+    modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

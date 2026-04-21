@@ -33,6 +33,7 @@ fun TargetAppSection(
     targetPackage: String?,
     onEvent: (EditRuleEvent) -> Unit,
     installedApps: List<AppInfo>,
+    modifier: Modifier = Modifier,
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -48,7 +49,7 @@ fun TargetAppSection(
             }
         }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },

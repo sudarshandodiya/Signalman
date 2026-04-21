@@ -30,11 +30,13 @@ fun EditRuleScreen(
     uiState: EditRuleUiState,
     onEvent: (EditRuleEvent) -> Unit,
     onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Conditions", "Transformation", "Target App")
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = { Text(if (uiState.name.isNotBlank()) uiState.name else "Edit Rule") },

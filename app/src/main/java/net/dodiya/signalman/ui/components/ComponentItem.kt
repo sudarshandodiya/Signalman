@@ -34,12 +34,12 @@ fun ComponentItem(
     originalValue: String,
     replacementValue: String?,
     onReplacementChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    var editValue by remember { mutableStateOf(replacementValue ?: "") }
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -68,55 +68,75 @@ fun ComponentItem(
                 }
             }
         }
-        IconButton(onClick = {
-            editValue = replacementValue ?: originalValue
-            showDialog = true
-        }) {
+        IconButton(onClick = { showDialog = true }) {
             Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(20.dp))
         }
     }
 
     if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Edit $label") },
-            text = {
-                OutlinedTextField(
-                    value = editValue,
-                    onValueChange = { editValue = it },
-                    label = { Text("Replacement") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    trailingIcon = {
-                        if (editValue.isNotEmpty()) {
-                            IconButton(onClick = { editValue = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear")
-                            }
-                        }
-                    },
-                )
+        EditValueDialog(
+            label = label,
+            initialValue = replacementValue ?: originalValue,
+            hasReplacement = replacementValue != null,
+            onDismiss = { showDialog = false },
+            onApply = {
+                onReplacementChange(it)
+                showDialog = false
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    onReplacementChange(editValue)
-                    showDialog = false
-                }) {
-                    Text("Apply")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text("Cancel")
-                }
-                if (replacementValue != null) {
-                    TextButton(onClick = {
-                        onReplacementChange("")
-                        showDialog = false
-                    }) {
-                        Text("Reset", color = MaterialTheme.colorScheme.error)
-                    }
-                }
+            onReset = {
+                onReplacementChange("")
+                showDialog = false
             },
         )
     }
+}
+
+@Composable
+private fun EditValueDialog(
+    label: String,
+    initialValue: String,
+    hasReplacement: Boolean,
+    onDismiss: () -> Unit,
+    onApply: (String) -> Unit,
+    onReset: () -> Unit,
+) {
+    var editValue by remember { mutableStateOf(initialValue) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit $label") },
+        text = {
+            OutlinedTextField(
+                value = editValue,
+                onValueChange = { editValue = it },
+                label = { Text("Replacement") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    if (editValue.isNotEmpty()) {
+                        IconButton(onClick = { editValue = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        }
+                    }
+                },
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onApply(editValue) }) {
+                Text("Apply")
+            }
+        },
+        dismissButton = {
+            Row {
+                if (hasReplacement) {
+                    TextButton(onClick = onReset) {
+                        Text("Reset", color = MaterialTheme.colorScheme.error)
+                    }
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("Cancel")
+                }
+            }
+        },
+    )
 }
