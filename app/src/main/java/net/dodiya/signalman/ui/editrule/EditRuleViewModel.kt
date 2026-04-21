@@ -150,23 +150,25 @@ class EditRuleViewModel(
     private fun loadInstalledApps() {
         viewModelScope.launch(Dispatchers.IO) {
             val pm = application.packageManager
-            
+
             // Query for all apps that have a launcher activity
-            val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
-                addCategory(Intent.CATEGORY_LAUNCHER)
-            }
+            val mainIntent =
+                Intent(Intent.ACTION_MAIN, null).apply {
+                    addCategory(Intent.CATEGORY_LAUNCHER)
+                }
             val launcherApps = pm.queryIntentActivities(mainIntent, 0)
-            
+
             // Query for apps that can specifically handle web URLs
-            val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com")).apply {
-                addCategory(Intent.CATEGORY_DEFAULT)
-                addCategory(Intent.CATEGORY_BROWSABLE)
-            }
+            val webIntent =
+                Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com")).apply {
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                }
             val webApps = pm.queryIntentActivities(webIntent, 0)
-            
+
             // Union of apps that can handle web URLs or have a launcher, excluding Signalman
             val allRelevantApps = (launcherApps + webApps).distinctBy { it.activityInfo.packageName }
-            
+
             val myPackage = application.packageName
             val apps =
                 allRelevantApps
@@ -177,8 +179,7 @@ class EditRuleViewModel(
                             packageName = it.activityInfo.packageName,
                             icon = it.loadIcon(pm),
                         )
-                    }
-                    .sortedBy { it.name }
+                    }.sortedBy { it.name }
 
             _uiState.update { it.copy(installedApps = apps) }
         }

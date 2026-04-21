@@ -1,6 +1,5 @@
 package net.dodiya.signalman.ui.editrule
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.TextFields
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -36,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import net.dodiya.signalman.data.Filter
 import net.dodiya.signalman.data.LogicalOperator
@@ -107,7 +104,13 @@ fun ConditionsSection(
                                 MatchType.entries.forEach { type ->
                                     androidx.compose.material3.DropdownMenuItem(
                                         text = { Text(type.userFriendlyName) },
-                                        leadingIcon = { Icon(getMatchTypeIcon(type), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                getMatchTypeIcon(type),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp),
+                                            )
+                                        },
                                         onClick = {
                                             onEvent(EditRuleEvent.FilterChanged(index, filter.copy(matchType = type)))
                                             expanded = false

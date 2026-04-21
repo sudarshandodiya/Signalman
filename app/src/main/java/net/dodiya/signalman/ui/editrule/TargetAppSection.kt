@@ -24,8 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import net.dodiya.signalman.data.AppInfo
-import net.dodiya.signalman.ui.editrule.EditRuleEvent
 import net.dodiya.signalman.ui.components.AppListItem
+import net.dodiya.signalman.ui.editrule.EditRuleEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

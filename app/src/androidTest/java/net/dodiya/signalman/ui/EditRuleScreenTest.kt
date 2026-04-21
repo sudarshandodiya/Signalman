@@ -5,11 +5,11 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import net.dodiya.signalman.data.Filter
+import net.dodiya.signalman.data.MatchType
 import net.dodiya.signalman.ui.editrule.EditRuleEvent
 import net.dodiya.signalman.ui.editrule.EditRuleScreen
 import net.dodiya.signalman.ui.editrule.EditRuleUiState
-import net.dodiya.signalman.data.Filter
-import net.dodiya.signalman.data.MatchType
 import org.junit.Rule
 import org.junit.Test
 
@@ -18,7 +18,7 @@ class EditRuleScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun editRuleScreen_showsInitialState() {
+    fun editRuleScreenShowsInitialState() {
         val initialState =
             EditRuleUiState(
                 name = "Test Rule",
@@ -39,7 +39,7 @@ class EditRuleScreenTest {
     }
 
     @Test
-    fun editRuleScreen_typingExampleUrl_triggersEvent() {
+    fun editRuleScreenTypingExampleUrlTriggersEvent() {
         var lastEvent: EditRuleEvent? = null
         val initialState = EditRuleUiState()
 
@@ -59,7 +59,7 @@ class EditRuleScreenTest {
     }
 
     @Test
-    fun editRuleScreen_previewMatch_showsMatch() {
+    fun editRuleScreenPreviewMatchShowsMatch() {
         val initialState =
             EditRuleUiState(
                 exampleUrl = "https://match.com",
@@ -78,7 +78,7 @@ class EditRuleScreenTest {
     }
 
     @Test
-    fun editRuleScreen_previewMatch_showsNoMatch() {
+    fun editRuleScreenPreviewMatchShowsNoMatch() {
         val initialState =
             EditRuleUiState(
                 exampleUrl = "https://nomatch.com",
@@ -97,7 +97,7 @@ class EditRuleScreenTest {
     }
 
     @Test
-    fun editRuleScreen_saveButton_triggersSave() {
+    fun editRuleScreenSaveButtonTriggersSave() {
         var saved = false
         val initialState =
             EditRuleUiState(
