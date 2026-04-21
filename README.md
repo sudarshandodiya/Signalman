@@ -19,7 +19,19 @@ Signalman is an advanced URL router for Android that acts as a default handler f
 
 ## Screenshots
 
-*Coming soon*
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="screenshots/rules_list.png" width="200" alt="Rules List"/><br/><b>Rules List</b></td>
+      <td align="center"><img src="screenshots/edit_rule.png" width="200" alt="Edit Rule"/><br/><b>Edit Rule</b></td>
+      <td align="center"><img src="screenshots/auto_rules.png" width="200" alt="Auto Rules"/><br/><b>Auto Rules</b></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="screenshots/overlay_chooser.png" width="200" alt="Overlay Chooser"/><br/><b>Overlay Chooser</b></td>
+      <td align="center"><img src="screenshots/settings.png" width="200" alt="Settings"/><br/><b>Settings</b></td>
+    </tr>
+  </table>
+</div>
 
 ## Requirements
 

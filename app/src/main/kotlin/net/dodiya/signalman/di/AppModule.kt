@@ -8,7 +8,9 @@ import net.dodiya.signalman.data.RuleRepositoryImpl
 import net.dodiya.signalman.domain.CreateAutoRuleUseCase
 import net.dodiya.signalman.domain.MatchRuleUseCase
 import net.dodiya.signalman.domain.TransformUrlUseCase
+import net.dodiya.signalman.ui.RoutingViewModel
 import net.dodiya.signalman.ui.RuleViewModel
+import net.dodiya.signalman.ui.SettingsViewModel
 import net.dodiya.signalman.ui.editrule.EditRuleViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModelOf
@@ -60,6 +62,8 @@ val viewModelModule =
     module {
         viewModelOf(::RuleViewModel)
         viewModelOf(::EditRuleViewModel)
+        viewModelOf(::RoutingViewModel)
+        viewModelOf(::SettingsViewModel)
     }
 
 /**
