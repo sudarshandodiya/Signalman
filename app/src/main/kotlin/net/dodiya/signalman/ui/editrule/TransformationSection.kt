@@ -92,7 +92,7 @@ fun TransformationSection(
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         ) {
             Row(modifier = Modifier.padding(4.dp)) {
-                val isSimple = transformMode == TransformMode.SIMPLE
+                val isSimple = transformMode is TransformMode.Simple
                 Box(
                     modifier =
                         Modifier
@@ -105,7 +105,7 @@ fun TransformationSection(
                                 } else {
                                     androidx.compose.ui.graphics.Color.Transparent
                                 },
-                            ).clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.SIMPLE)) },
+                            ).clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.Simple())) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -131,7 +131,7 @@ fun TransformationSection(
                                 } else {
                                     androidx.compose.ui.graphics.Color.Transparent
                                 },
-                            ).clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.ADVANCED)) },
+                            ).clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.Advanced())) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -150,7 +150,7 @@ fun TransformationSection(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (transformMode == TransformMode.SIMPLE) {
+        if (transformMode is TransformMode.Simple) {
             val visibleComponents = listOf(UrlComponent.SCHEME, UrlComponent.HOST, UrlComponent.DOMAIN)
             visibleComponents.forEach { component ->
                 val originalValue =

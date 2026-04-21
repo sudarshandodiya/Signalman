@@ -44,8 +44,9 @@ fun RuleItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = rule.name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
+                val patternText = rule.filters.firstOrNull()?.pattern ?: "No pattern"
                 Text(
-                    text = rule.pattern,
+                    text = patternText,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     color = MaterialTheme.colorScheme.outline,

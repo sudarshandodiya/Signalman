@@ -29,7 +29,7 @@ data class EditRuleUiState(
     val replacePattern: String = "",
     val replacement: String = "",
     val urlComponentReplacements: List<UrlComponentReplacement> = emptyList(),
-    val transformMode: TransformMode = TransformMode.SIMPLE,
+    val transformMode: TransformMode = TransformMode.Simple(),
     val exampleUrl: String = "",
     val isPreviewMatch: Boolean = false,
     val previewTransformedUrl: String? = null,
@@ -117,16 +117,38 @@ class EditRuleViewModel(
         if (ruleId != -1) {
             viewModelScope.launch {
                 repository.getRule(ruleId)?.let { rule ->
+                    val (replacePattern, replacement, urlComponentReplacements) =
+                        when (val tm = rule.transformMode) {
+                            is TransformMode.Simple ->
+                                Triple(
+                                    tm.replacePattern,
+                                    tm.replacement,
+                                    emptyList<UrlComponentReplacement>(),
+                                )
+                            is TransformMode.Advanced ->
+                                Triple(
+                                    "",
+                                    "",
+                                    tm.urlComponentReplacements,
+                                )
+                        }
+                    val isTransformEnabled =
+                        when (val tm = rule.transformMode) {
+                            is TransformMode.Simple ->
+                                tm.replacePattern.isNotEmpty() || tm.replacement.isNotEmpty()
+                            is TransformMode.Advanced ->
+                                tm.urlComponentReplacements.any { it.replacement.isNotEmpty() }
+                        }
                     _uiState.update { currentState ->
                         currentState.copy(
                             name = rule.name,
                             filters = rule.filters.ifEmpty { listOf(Filter("", MatchType.CONTAINS)) },
                             logicalOperator = rule.logicalOperator,
                             targetPackage = rule.targetPackage,
-                            isTransformEnabled = rule.isTransformEnabled,
-                            replacePattern = rule.replacePattern ?: "",
-                            replacement = rule.replacement ?: "",
-                            urlComponentReplacements = rule.urlComponentReplacements,
+                            isTransformEnabled = isTransformEnabled,
+                            replacePattern = replacePattern,
+                            replacement = replacement,
+                            urlComponentReplacements = urlComponentReplacements,
                             transformMode = rule.transformMode,
                             exampleUrl = rule.exampleUrl ?: initialExampleUrl ?: "",
                         )
@@ -237,7 +259,7 @@ class EditRuleViewModel(
                 name = "Preview",
                 filters = state.filters,
                 logicalOperator = state.logicalOperator,
-                targetPackage = null,
+                targetPackage = "",
             )
         val isMatch = matchRuleUseCase(state.exampleUrl, listOf(rule)).isNotEmpty()
 
@@ -250,7 +272,7 @@ class EditRuleViewModel(
                         Rule(
                             name = "FilterPreview",
                             filters = listOf(filter),
-                            targetPackage = null,
+                            targetPackage = "",
                         )
                     matchRuleUseCase(state.exampleUrl, listOf(singleFilterRule)).isNotEmpty()
                 }
@@ -258,14 +280,19 @@ class EditRuleViewModel(
 
         var transformedUrl: String? = null
         if (state.isTransformEnabled && isMatch) {
-            val transformRule =
-                rule.copy(
-                    isTransformEnabled = true,
-                    replacePattern = state.replacePattern.ifEmpty { null },
-                    replacement = state.replacement,
-                    urlComponentReplacements = state.urlComponentReplacements,
-                    transformMode = state.transformMode,
-                )
+            val transformMode =
+                when (state.transformMode) {
+                    is TransformMode.Simple ->
+                        TransformMode.Simple(
+                            replacePattern = state.replacePattern,
+                            replacement = state.replacement,
+                        )
+                    is TransformMode.Advanced ->
+                        TransformMode.Advanced(
+                            urlComponentReplacements = state.urlComponentReplacements,
+                        )
+                }
+            val transformRule = rule.copy(transformMode = transformMode)
             transformedUrl = transformUrlUseCase(state.exampleUrl.toUri(), transformRule).toString()
         }
 
@@ -287,18 +314,26 @@ class EditRuleViewModel(
     private fun saveRule() {
         viewModelScope.launch {
             val state = _uiState.value
+            val transformMode =
+                when (state.transformMode) {
+                    is TransformMode.Simple ->
+                        TransformMode.Simple(
+                            replacePattern = state.replacePattern,
+                            replacement = state.replacement,
+                        )
+                    is TransformMode.Advanced ->
+                        TransformMode.Advanced(
+                            urlComponentReplacements = state.urlComponentReplacements,
+                        )
+                }
             val rule =
                 Rule(
                     id = if (ruleId == -1) 0 else ruleId,
                     name = state.name,
                     filters = state.filters,
                     logicalOperator = state.logicalOperator,
-                    targetPackage = state.targetPackage,
-                    isTransformEnabled = state.isTransformEnabled,
-                    replacePattern = state.replacePattern.ifEmpty { null },
-                    replacement = state.replacement,
-                    urlComponentReplacements = state.urlComponentReplacements,
-                    transformMode = state.transformMode,
+                    targetPackage = state.targetPackage ?: "",
+                    transformMode = transformMode,
                     exampleUrl = state.exampleUrl.ifEmpty { null },
                 )
             if (ruleId == -1) {

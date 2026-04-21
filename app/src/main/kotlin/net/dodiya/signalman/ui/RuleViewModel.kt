@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.dodiya.signalman.data.AppInfo
 import net.dodiya.signalman.data.AppInfoRepository
 import net.dodiya.signalman.data.PreferenceManager
 import net.dodiya.signalman.data.Rule
@@ -27,7 +28,13 @@ class RuleViewModel(
         private const val SUBSCRIBE_TIMEOUT_MS = 5000L
     }
 
-    val installedApps = appInfoRepository.installedApps
+    val installedApps: StateFlow<List<AppInfo>> =
+        appInfoRepository.installedApps
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS),
+                initialValue = emptyList(),
+            )
 
     val globalDefaultPackage: StateFlow<String?> =
         preferenceManager.globalDefaultPackage
@@ -66,24 +73,6 @@ class RuleViewModel(
     fun setAutoRuleGenerationEnabled(enabled: Boolean) {
         viewModelScope.launch {
             preferenceManager.setAutoRuleGenerationEnabled(enabled)
-        }
-    }
-
-    fun setAlwaysChoiceForUrl(
-        url: String,
-        packageName: String,
-    ) {
-        viewModelScope.launch {
-            preferenceManager.setAlwaysChoiceForUrl(url, packageName)
-        }
-    }
-
-    fun setAlwaysChoiceForDomain(
-        domain: String,
-        packageName: String,
-    ) {
-        viewModelScope.launch {
-            preferenceManager.setAlwaysChoiceForDomain(domain, packageName)
         }
     }
 
