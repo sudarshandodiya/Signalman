@@ -22,7 +22,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.data.AppInfo
 import net.dodiya.signalman.ui.editrule.EditRuleEvent
 import net.dodiya.signalman.ui.editrule.EditRuleUiState
@@ -37,18 +40,31 @@ fun EditRuleScreen(
     modifier: Modifier = Modifier,
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Conditions", "Transformation", "Target App")
+    val context = LocalContext.current
+    val tabs = listOf(
+        stringResource(R.string.tab_conditions),
+        stringResource(R.string.tab_transformation),
+        stringResource(R.string.tab_target_app)
+    )
 
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.name.isNotBlank()) uiState.name else "Edit Rule") },
+                title = {
+                    Text(
+                        if (uiState.name.isNotBlank()) {
+                            uiState.name
+                        } else {
+                            context.getString(R.string.title_edit_rule)
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardBackspace,
-                            contentDescription = "Back",
+                            contentDescription = context.getString(R.string.action_back),
                         )
                     }
                 },
@@ -61,7 +77,7 @@ fun EditRuleScreen(
                         modifier = Modifier.padding(end = 8.dp),
                         enabled = uiState.isSaveEnabled,
                     ) {
-                        Text("Save")
+                        Text(stringResource(R.string.action_save))
                     }
                 },
             )

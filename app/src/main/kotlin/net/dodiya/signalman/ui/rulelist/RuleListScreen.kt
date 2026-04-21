@@ -28,8 +28,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import net.dodiya.signalman.R
 import net.dodiya.signalman.ui.RuleViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,11 +60,13 @@ fun RuleListScreen(
             }
         }
 
+    val context = LocalContext.current
+
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Signalman") },
+                title = { Text(context.getString(R.string.title_signalman)) },
             )
         },
         bottomBar = {
@@ -71,19 +75,19 @@ fun RuleListScreen(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
                     icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
-                    label = { Text("Custom") },
+                    label = { Text(context.getString(R.string.nav_custom)) },
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
                     icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
-                    label = { Text("Auto") },
+                    label = { Text(context.getString(R.string.nav_auto)) },
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToSettings,
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                    label = { Text("Settings") },
+                    label = { Text(context.getString(R.string.nav_settings)) },
                 )
             }
         },
@@ -93,7 +97,7 @@ fun RuleListScreen(
                     onClick = { showAddRuleDialog = true },
                     modifier = Modifier.padding(bottom = 16.dp),
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Rule")
+                    Icon(Icons.Default.Add, contentDescription = context.getString(R.string.cd_add_rule))
                 }
             }
         },
@@ -112,7 +116,13 @@ fun RuleListScreen(
 
             if (filteredRules.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(if (selectedTab == 0) "No custom rules yet." else "No auto-generated rules yet.")
+                    Text(
+                        if (selectedTab == 0) {
+                            context.getString(R.string.no_custom_rules)
+                        } else {
+                            context.getString(R.string.no_auto_rules)
+                        }
+                    )
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {

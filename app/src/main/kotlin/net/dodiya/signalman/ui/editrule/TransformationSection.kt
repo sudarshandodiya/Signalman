@@ -33,7 +33,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.data.TransformMode
 import net.dodiya.signalman.data.UrlComponent
 import net.dodiya.signalman.data.UrlComponentReplacement
@@ -74,7 +76,7 @@ fun TransformationSection(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(
-                "Enable Transformation",
+                stringResource(R.string.enable_transformation),
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.weight(1f),
             )
@@ -109,7 +111,7 @@ fun TransformationSection(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "Simple",
+                        stringResource(R.string.mode_simple),
                         style = MaterialTheme.typography.labelLarge,
                         color =
                             if (isSimple) {
@@ -135,7 +137,7 @@ fun TransformationSection(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        "Regex",
+                        stringResource(R.string.mode_regex),
                         style = MaterialTheme.typography.labelLarge,
                         color =
                             if (!isSimple) {
@@ -189,20 +191,14 @@ fun TransformationSection(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Add Component")
+                Text(stringResource(R.string.add_component))
             }
         } else {
             OutlinedTextField(
                 value = replacePattern,
                 onValueChange = { onEvent(EditRuleEvent.ReplacePatternChanged(it)) },
-                label = { Text("Match Pattern") },
+                label = { Text(stringResource(R.string.match_pattern_label)) },
                 modifier = Modifier.fillMaxWidth(),
-            )
-            Text(
-                "Hint Pattern Hint",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp, start = 4.dp),
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -210,14 +206,8 @@ fun TransformationSection(
             OutlinedTextField(
                 value = replacement,
                 onValueChange = { onEvent(EditRuleEvent.ReplacementChanged(it)) },
-                label = { Text("Substitution") },
+                label = { Text(stringResource(R.string.substitution_label)) },
                 modifier = Modifier.fillMaxWidth(),
-            )
-            Text(
-                "Substitution Hint",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp, start = 4.dp),
             )
         }
     }

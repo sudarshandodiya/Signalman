@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.data.Rule
 import net.dodiya.signalman.ui.overlay.AppRow
 
@@ -73,7 +74,7 @@ fun OverlayChooser(
                     .padding(bottom = 32.dp),
         ) {
             Text(
-                text = "Signalman",
+                text = context.getString(R.string.title_signalman),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
@@ -90,11 +91,11 @@ fun OverlayChooser(
                 IconButton(
                     onClick = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("URL", uri.toString())
+                        val clip = ClipData.newPlainText(context.getString(R.string.url_clipboard_label), uri.toString())
                         clipboard.setPrimaryClip(clip)
                     },
                 ) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy")
+                    Icon(Icons.Default.ContentCopy, contentDescription = context.getString(R.string.action_copy))
                 }
                 IconButton(
                     onClick = {
@@ -103,10 +104,10 @@ fun OverlayChooser(
                                 type = "text/plain"
                                 putExtra(Intent.EXTRA_TEXT, uri.toString())
                             }
-                        context.startActivity(Intent.createChooser(shareIntent, "Share URL"))
+                        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_url_title)))
                     },
                 ) {
-                    Icon(Icons.Default.Share, contentDescription = "Share")
+                    Icon(Icons.Default.Share, contentDescription = context.getString(R.string.action_share))
                 }
             }
 
@@ -122,7 +123,7 @@ fun OverlayChooser(
                 if (matchedRules.isNotEmpty()) {
                     item {
                         Text(
-                            "Suggested Rules",
+                            context.getString(R.string.suggested_rules),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -131,7 +132,7 @@ fun OverlayChooser(
                     items(matchedRules) { rule ->
                         AppRow(
                             name = rule.name,
-                            pkg = rule.targetPackage ?: "System",
+                            pkg = rule.targetPackage ?: context.getString(R.string.system),
                             isSelected = selectedRule == rule,
                             onClick = {
                                 selectedRule = rule
@@ -147,7 +148,7 @@ fun OverlayChooser(
                 }
 
                 item {
-                    Text("Apps that can open this link", style = MaterialTheme.typography.labelLarge)
+                    Text(context.getString(R.string.apps_can_open), style = MaterialTheme.typography.labelLarge)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
@@ -167,7 +168,7 @@ fun OverlayChooser(
                 if (browserActivities.isEmpty()) {
                     item {
                         Text(
-                            "No apps found that can open this link.",
+                            context.getString(R.string.no_apps_found),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.outline,
                             modifier = Modifier.padding(vertical = 16.dp),
@@ -198,7 +199,7 @@ fun OverlayChooser(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(horizontal = 4.dp),
                 ) {
-                    Text("Once", style = MaterialTheme.typography.labelMedium)
+                    Text(context.getString(R.string.action_once), style = MaterialTheme.typography.labelMedium)
                 }
                 OutlinedButton(
                     onClick = { selectedPackage?.let { onAppSelection(it, 2) } },
@@ -206,7 +207,7 @@ fun OverlayChooser(
                     modifier = Modifier.weight(1f),
                     contentPadding = PaddingValues(horizontal = 4.dp),
                 ) {
-                    Text("Always", style = MaterialTheme.typography.labelMedium)
+                    Text(context.getString(R.string.action_always), style = MaterialTheme.typography.labelMedium)
                 }
             }
         }

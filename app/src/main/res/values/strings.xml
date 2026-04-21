@@ -1,4 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App Name -->
     <string name="app_name">Signalman</string>
+
+    <!-- Navigation -->
+    <string name="nav_custom">Custom</string>
+    <string name="nav_auto">Auto</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Common Actions -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_add">Add</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_share">Share</string>
+    <string name="action_back">Back</string>
+    <string name="action_once">Once</string>
+    <string name="action_always">Always</string>
+    <string name="action_next">Next</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_select_all">Select All</string>
+    <string name="action_deselect_all">Deselect All</string>
+
+    <!-- Screen Titles -->
+    <string name="title_signalman">Signalman</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_import_export">Import / Export</string>
+    <string name="title_edit_rule">Edit Rule</string>
+    <string name="title_new_rule">New Rule</string>
+    <string name="title_browser_visibility">Browser Visibility</string>
+    <string name="title_select_default_app">Select Default App</string>
+
+    <!-- Rule List Screen -->
+    <string name="no_custom_rules">No custom rules yet.</string>
+    <string name="no_auto_rules">No auto-generated rules yet.</string>
+    <string name="cd_add_rule">Add Rule</string>
+
+    <!-- Auto Rules Header -->
+    <string name="auto_enable_title">Enable auto rule generation</string>
+    <string name="auto_enable_subtitle">Prompt to create rules for new links</string>
+    <string name="fallback_action">Fallback Action</string>
+    <string name="default_app">Default App</string>
+    <string name="cd_clear_default">Clear Default</string>
+    <string name="system_chooser_none">System Chooser (None)</string>
+    <string name="no_pattern">No pattern</string>
+    <string name="system_chooser">Chooser</string>
+
+    <!-- Add Rule Dialog -->
+    <string name="rule_details_hint">Enter rule details</string>
+    <string name="rule_name_label">Rule Name</string>
+    <string name="example_url_label">Example URL (Optional)</string>
+    <string name="example_url_placeholder">https://x.com/post/123</string>
+
+    <!-- Edit Rule Screen -->
+    <string name="tab_conditions">Conditions</string>
+    <string name="tab_transformation">Transformation</string>
+    <string name="tab_target_app">Target App</string>
+
+    <!-- Conditions Section -->
+    <string name="operator_label">Operator:</string>
+    <string name="operator_and">AND</string>
+    <string name="operator_or">OR</string>
+    <string name="pattern_placeholder">Pattern</string>
+    <string name="cd_remove_condition">Remove</string>
+    <string name="add_condition">Add Condition</string>
+
+    <!-- Transformation Section -->
+    <string name="add_component">Add Component</string>
+    <string name="match_pattern_label">Match Pattern</string>
+    <string name="substitution_label">Substitution</string>
+    <string name="enable_transformation">Enable Transformation</string>
+    <string name="mode_simple">Simple</string>
+    <string name="mode_regex">Regex</string>
+
+    <!-- Target App Section -->
+    <string name="search_app_label">Search App</string>
+    <string name="cd_clear_search">Clear</string>
+    <string name="system_chooser_default">System Chooser (Default)</string>
+    <string name="system_will_ask">System will ask every time</string>
+
+    <!-- App Picker Dialog -->
+    <string name="search_apps_label">Search Apps</string>
+
+    <!-- Settings Screen -->
+    <string name="section_general">General</string>
+    <string name="section_browsers">Browsers</string>
+    <string name="export_rules_title">Export Rules</string>
+    <string name="export_rules_subtitle">Save all your rules to a JSON file</string>
+    <string name="import_rules_title">Import Rules</string>
+    <string name="import_rules_subtitle">Load rules from a JSON file</string>
+    <string name="browser_visibility_title">Browser Visibility</string>
+    <string name="browser_visibility_subtitle">Select which browsers to show in overlay</string>
+
+    <!-- Import/Export Screen -->
+    <string name="import_count">Import (%1$d)</string>
+    <string name="import_select_rules">Select rules to import</string>
+    <string name="import_rules_found">%1$d rules found in file</string>
+    <string name="import_filter_count">%1$d filter(s) • %2$s</string>
+
+    <!-- Overlay Chooser -->
+    <string name="suggested_rules">Suggested Rules</string>
+    <string name="apps_can_open">Apps that can open this link</string>
+    <string name="no_apps_found">No apps found that can open this link.</string>
+    <string name="system">System</string>
+    <string name="url_clipboard_label">URL</string>
+    <string name="share_url_title">Share URL</string>
+
+    <!-- Component Item -->
+    <string name="cd_edit_component">Edit</string>
+
+    <!-- Edit Value Dialog -->
+    <string name="edit_label_format">Edit %1$s</string>
+    <string name="replacement_label">Replacement</string>
+
+    <!-- Toast/Snackbar Messages -->
+    <string name="url_copied">URL copied to clipboard</string>
 </resources>

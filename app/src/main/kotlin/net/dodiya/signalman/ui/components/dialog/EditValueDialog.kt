@@ -17,6 +17,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import net.dodiya.signalman.R
 
 @Composable
 internal fun EditValueDialog(
@@ -28,21 +31,22 @@ internal fun EditValueDialog(
     onReset: () -> Unit,
 ) {
     var editValue by remember { mutableStateOf(initialValue) }
+    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit $label") },
+        title = { Text(context.getString(R.string.edit_label_format, label)) },
         text = {
             OutlinedTextField(
                 value = editValue,
                 onValueChange = { editValue = it },
-                label = { Text("Replacement") },
+                label = { Text(stringResource(R.string.replacement_label)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     if (editValue.isNotEmpty()) {
                         IconButton(onClick = { editValue = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear")
+                            Icon(Icons.Default.Clear, contentDescription = context.getString(R.string.action_clear))
                         }
                     }
                 },
@@ -50,18 +54,18 @@ internal fun EditValueDialog(
         },
         confirmButton = {
             TextButton(onClick = { onApply(editValue) }) {
-                Text("Apply")
+                Text(stringResource(R.string.action_apply))
             }
         },
         dismissButton = {
             Row {
                 if (hasReplacement) {
                     TextButton(onClick = onReset) {
-                        Text("Reset", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.action_reset), color = MaterialTheme.colorScheme.error)
                     }
                 }
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         },

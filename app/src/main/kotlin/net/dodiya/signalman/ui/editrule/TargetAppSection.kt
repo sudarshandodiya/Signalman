@@ -22,7 +22,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.data.AppInfo
 import net.dodiya.signalman.ui.components.AppListItem
 import net.dodiya.signalman.ui.editrule.EditRuleEvent
@@ -36,6 +39,7 @@ fun TargetAppSection(
     modifier: Modifier = Modifier,
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     val filteredApps =
         remember(searchQuery, installedApps) {
@@ -53,12 +57,12 @@ fun TargetAppSection(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            label = { Text("Search App") },
+            label = { Text(stringResource(R.string.search_app_label)) },
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { searchQuery = "" }) {
-                        Icon(Icons.Default.Clear, contentDescription = "Clear")
+                        Icon(Icons.Default.Clear, contentDescription = context.getString(R.string.cd_clear_search))
                     }
                 } else {
                     Icon(Icons.Default.Search, contentDescription = null)
@@ -75,8 +79,8 @@ fun TargetAppSection(
         ) {
             item {
                 AppListItem(
-                    name = "System Chooser (Default)",
-                    packageName = "System will ask every time",
+                    name = context.getString(R.string.system_chooser_default),
+                    packageName = context.getString(R.string.system_will_ask),
                     isSelected = targetPackage == null,
                     onClick = { onEvent(EditRuleEvent.TargetPackageChanged(null)) },
                 )

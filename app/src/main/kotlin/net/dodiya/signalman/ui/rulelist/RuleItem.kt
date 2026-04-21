@@ -17,7 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.data.Rule
 
 @Composable
@@ -27,6 +29,8 @@ fun RuleItem(
     onEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+
     Card(
         modifier =
             modifier
@@ -44,21 +48,24 @@ fun RuleItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = rule.name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
-                val patternText = rule.filters.firstOrNull()?.pattern ?: "No pattern"
+                val patternText = rule.filters.firstOrNull()?.pattern
                 Text(
-                    text = patternText,
+                    text = patternText ?: context.getString(R.string.no_pattern),
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     color = MaterialTheme.colorScheme.outline,
                 )
-                Text(text = "→ ${rule.targetPackage ?: "Chooser"}", style = MaterialTheme.typography.labelSmall)
+                Text(
+                    text = "→ ${rule.targetPackage ?: context.getString(R.string.system_chooser)}",
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
             Row {
                 IconButton(onClick = onEdit) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                    Icon(Icons.Default.Edit, contentDescription = context.getString(R.string.action_edit))
                 }
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    Icon(Icons.Default.Delete, contentDescription = context.getString(R.string.action_delete))
                 }
             }
         }
