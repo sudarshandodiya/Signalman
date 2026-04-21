@@ -17,23 +17,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,8 +38,8 @@ import net.dodiya.signalman.data.TransformMode
 import net.dodiya.signalman.data.UrlComponent
 import net.dodiya.signalman.data.UrlComponentReplacement
 import net.dodiya.signalman.data.UrlComponents
-import net.dodiya.signalman.ui.editrule.EditRuleEvent
 import net.dodiya.signalman.ui.components.ComponentItem
+import net.dodiya.signalman.ui.editrule.EditRuleEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,16 +100,23 @@ fun TransformationSection(
                             .height(40.dp)
                             .clip(RoundedCornerShape(20.dp))
                             .background(
-                                if (isSimple) MaterialTheme.colorScheme.secondaryContainer
-                                else androidx.compose.ui.graphics.Color.Transparent,
-                            )
-                            .clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.SIMPLE)) },
+                                if (isSimple) {
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                } else {
+                                    androidx.compose.ui.graphics.Color.Transparent
+                                },
+                            ).clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.SIMPLE)) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         "Simple",
                         style = MaterialTheme.typography.labelLarge,
-                        color = if (isSimple) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color =
+                            if (isSimple) {
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                     )
                 }
                 Box(
@@ -125,16 +126,23 @@ fun TransformationSection(
                             .height(40.dp)
                             .clip(RoundedCornerShape(20.dp))
                             .background(
-                                if (!isSimple) MaterialTheme.colorScheme.secondaryContainer
-                                else androidx.compose.ui.graphics.Color.Transparent,
-                            )
-                            .clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.ADVANCED)) },
+                                if (!isSimple) {
+                                    MaterialTheme.colorScheme.secondaryContainer
+                                } else {
+                                    androidx.compose.ui.graphics.Color.Transparent
+                                },
+                            ).clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.ADVANCED)) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         "Regex",
                         style = MaterialTheme.typography.labelLarge,
-                        color = if (!isSimple) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color =
+                            if (!isSimple) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
                     )
                 }
             }

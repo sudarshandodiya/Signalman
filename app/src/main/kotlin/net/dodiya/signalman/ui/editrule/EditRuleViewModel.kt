@@ -1,6 +1,5 @@
 package net.dodiya.signalman.ui.editrule
 
-import android.content.pm.PackageManager
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -39,18 +38,55 @@ data class EditRuleUiState(
 )
 
 sealed class EditRuleEvent {
-    data class NameChanged(val name: String) : EditRuleEvent()
-    data class ExampleUrlChanged(val url: String) : EditRuleEvent()
-    data class FilterChanged(val index: Int, val filter: Filter) : EditRuleEvent()
-    data class FilterAdded(val filter: Filter) : EditRuleEvent()
-    data class FilterRemoved(val index: Int) : EditRuleEvent()
-    data class LogicalOperatorChanged(val operator: LogicalOperator) : EditRuleEvent()
-    data class TargetPackageChanged(val packageName: String?) : EditRuleEvent()
-    data class TransformEnabledChanged(val enabled: Boolean) : EditRuleEvent()
-    data class ReplacePatternChanged(val pattern: String) : EditRuleEvent()
-    data class ReplacementChanged(val replacement: String) : EditRuleEvent()
-    data class UrlComponentReplacementChanged(val replacement: UrlComponentReplacement) : EditRuleEvent()
-    data class TransformModeChanged(val mode: TransformMode) : EditRuleEvent()
+    data class NameChanged(
+        val name: String,
+    ) : EditRuleEvent()
+
+    data class ExampleUrlChanged(
+        val url: String,
+    ) : EditRuleEvent()
+
+    data class FilterChanged(
+        val index: Int,
+        val filter: Filter,
+    ) : EditRuleEvent()
+
+    data class FilterAdded(
+        val filter: Filter,
+    ) : EditRuleEvent()
+
+    data class FilterRemoved(
+        val index: Int,
+    ) : EditRuleEvent()
+
+    data class LogicalOperatorChanged(
+        val operator: LogicalOperator,
+    ) : EditRuleEvent()
+
+    data class TargetPackageChanged(
+        val packageName: String?,
+    ) : EditRuleEvent()
+
+    data class TransformEnabledChanged(
+        val enabled: Boolean,
+    ) : EditRuleEvent()
+
+    data class ReplacePatternChanged(
+        val pattern: String,
+    ) : EditRuleEvent()
+
+    data class ReplacementChanged(
+        val replacement: String,
+    ) : EditRuleEvent()
+
+    data class UrlComponentReplacementChanged(
+        val replacement: UrlComponentReplacement,
+    ) : EditRuleEvent()
+
+    data class TransformModeChanged(
+        val mode: TransformMode,
+    ) : EditRuleEvent()
+
     object SaveRule : EditRuleEvent()
 }
 
@@ -196,12 +232,13 @@ class EditRuleViewModel(
             return
         }
 
-        val rule = Rule(
-            name = "Preview",
-            filters = state.filters,
-            logicalOperator = state.logicalOperator,
-            targetPackage = null,
-        )
+        val rule =
+            Rule(
+                name = "Preview",
+                filters = state.filters,
+                logicalOperator = state.logicalOperator,
+                targetPackage = null,
+            )
         val isMatch = matchRuleUseCase(state.exampleUrl, listOf(rule)).isNotEmpty()
 
         val individualMatches =
@@ -209,24 +246,26 @@ class EditRuleViewModel(
                 if (filter.pattern.isBlank()) {
                     null
                 } else {
-                    val singleFilterRule = Rule(
-                        name = "FilterPreview",
-                        filters = listOf(filter),
-                        targetPackage = null,
-                    )
+                    val singleFilterRule =
+                        Rule(
+                            name = "FilterPreview",
+                            filters = listOf(filter),
+                            targetPackage = null,
+                        )
                     matchRuleUseCase(state.exampleUrl, listOf(singleFilterRule)).isNotEmpty()
                 }
             }
 
         var transformedUrl: String? = null
         if (state.isTransformEnabled && isMatch) {
-            val transformRule = rule.copy(
-                isTransformEnabled = true,
-                replacePattern = state.replacePattern.ifEmpty { null },
-                replacement = state.replacement,
-                urlComponentReplacements = state.urlComponentReplacements,
-                transformMode = state.transformMode,
-            )
+            val transformRule =
+                rule.copy(
+                    isTransformEnabled = true,
+                    replacePattern = state.replacePattern.ifEmpty { null },
+                    replacement = state.replacement,
+                    urlComponentReplacements = state.urlComponentReplacements,
+                    transformMode = state.transformMode,
+                )
             transformedUrl = transformUrlUseCase(state.exampleUrl.toUri(), transformRule).toString()
         }
 
@@ -248,19 +287,20 @@ class EditRuleViewModel(
     private fun saveRule() {
         viewModelScope.launch {
             val state = _uiState.value
-            val rule = Rule(
-                id = if (ruleId == -1) 0 else ruleId,
-                name = state.name,
-                filters = state.filters,
-                logicalOperator = state.logicalOperator,
-                targetPackage = state.targetPackage,
-                isTransformEnabled = state.isTransformEnabled,
-                replacePattern = state.replacePattern.ifEmpty { null },
-                replacement = state.replacement,
-                urlComponentReplacements = state.urlComponentReplacements,
-                transformMode = state.transformMode,
-                exampleUrl = state.exampleUrl.ifEmpty { null },
-            )
+            val rule =
+                Rule(
+                    id = if (ruleId == -1) 0 else ruleId,
+                    name = state.name,
+                    filters = state.filters,
+                    logicalOperator = state.logicalOperator,
+                    targetPackage = state.targetPackage,
+                    isTransformEnabled = state.isTransformEnabled,
+                    replacePattern = state.replacePattern.ifEmpty { null },
+                    replacement = state.replacement,
+                    urlComponentReplacements = state.urlComponentReplacements,
+                    transformMode = state.transformMode,
+                    exampleUrl = state.exampleUrl.ifEmpty { null },
+                )
             if (ruleId == -1) {
                 repository.insert(rule)
             } else {

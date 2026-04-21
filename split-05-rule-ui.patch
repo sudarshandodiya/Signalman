@@ -1,0 +1,1982 @@
+diff --git a/app/src/androidTest/java/net/dodiya/signalman/ExampleInstrumentedTest.kt b/app/src/androidTest/java/net/dodiya/signalman/ExampleInstrumentedTest.kt
+new file mode 100644
+index 0000000..b8f0b8c
+--- /dev/null
++++ b/app/src/androidTest/java/net/dodiya/signalman/ExampleInstrumentedTest.kt
+@@ -0,0 +1,22 @@
++package net.dodiya.signalman
++
++import androidx.test.ext.junit.runners.AndroidJUnit4
++import androidx.test.platform.app.InstrumentationRegistry
++import org.junit.Assert.assertEquals
++import org.junit.Test
++import org.junit.runner.RunWith
++
++/**
++ * Instrumented test, which will execute on an Android device.
++ *
++ * See [testing documentation](http://d.android.com/tools/testing).
++ */
++@RunWith(AndroidJUnit4::class)
++class ExampleInstrumentedTest {
++    @Test
++    fun useAppContext() {
++        // Context of the app under test.
++        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
++        assertEquals("net.dodiya.signalman", appContext.packageName)
++    }
++}
+diff --git a/app/src/androidTest/java/net/dodiya/signalman/ui/EditRuleScreenTest.kt b/app/src/androidTest/java/net/dodiya/signalman/ui/EditRuleScreenTest.kt
+new file mode 100644
+index 0000000..fbd2ad8
+--- /dev/null
++++ b/app/src/androidTest/java/net/dodiya/signalman/ui/EditRuleScreenTest.kt
+@@ -0,0 +1,122 @@
++package net.dodiya.signalman.ui
++
++import androidx.compose.ui.test.assertIsDisplayed
++import androidx.compose.ui.test.junit4.createComposeRule
++import androidx.compose.ui.test.onNodeWithText
++import androidx.compose.ui.test.performClick
++import androidx.compose.ui.test.performTextInput
++import net.dodiya.signalman.data.Filter
++import net.dodiya.signalman.data.MatchType
++import net.dodiya.signalman.ui.editrule.EditRuleEvent
++import net.dodiya.signalman.ui.editrule.EditRuleScreen
++import net.dodiya.signalman.ui.editrule.EditRuleUiState
++import org.junit.Rule
++import org.junit.Test
++
++class EditRuleScreenTest {
++    @get:Rule
++    val composeTestRule = createComposeRule()
++
++    @Test
++    fun editRuleScreenShowsInitialState() {
++        val initialState =
++            EditRuleUiState(
++                name = "Test Rule",
++                filters = listOf(Filter("example.com", MatchType.CONTAINS)),
++            )
++
++        composeTestRule.setContent {
++            EditRuleScreen(
++                uiState = initialState,
++                onEvent = {},
++                onNavigateBack = {},
++            )
++        }
++
++        composeTestRule.onNodeWithText("Test Rule").assertIsDisplayed()
++        composeTestRule.onNodeWithText("example.com").assertIsDisplayed()
++        composeTestRule.onNodeWithText("Add Condition").assertIsDisplayed()
++    }
++
++    @Test
++    fun editRuleScreenTypingExampleUrlTriggersEvent() {
++        var lastEvent: EditRuleEvent? = null
++        val initialState = EditRuleUiState()
++
++        composeTestRule.setContent {
++            EditRuleScreen(
++                uiState = initialState,
++                onEvent = { lastEvent = it },
++                onNavigateBack = {},
++            )
++        }
++
++        composeTestRule.onNodeWithText("Example URL for live testing").performTextInput("https://test.com")
++
++        // Assert that the event was triggered
++        assert(lastEvent is EditRuleEvent.ExampleUrlChanged)
++        assert((lastEvent as EditRuleEvent.ExampleUrlChanged).url == "https://test.com")
++    }
++
++    @Test
++    fun editRuleScreenPreviewMatchShowsMatch() {
++        val initialState =
++            EditRuleUiState(
++                exampleUrl = "https://match.com",
++                isPreviewMatch = true,
++            )
++
++        composeTestRule.setContent {
++            EditRuleScreen(
++                uiState = initialState,
++                onEvent = {},
++                onNavigateBack = {},
++            )
++        }
++
++        composeTestRule.onNodeWithText("Matches").assertIsDisplayed()
++    }
++
++    @Test
++    fun editRuleScreenPreviewMatchShowsNoMatch() {
++        val initialState =
++            EditRuleUiState(
++                exampleUrl = "https://nomatch.com",
++                isPreviewMatch = false,
++            )
++
++        composeTestRule.setContent {
++            EditRuleScreen(
++                uiState = initialState,
++                onEvent = {},
++                onNavigateBack = {},
++            )
++        }
++
++        composeTestRule.onNodeWithText("Does Not Match").assertIsDisplayed()
++    }
++
++    @Test
++    fun editRuleScreenSaveButtonTriggersSave() {
++        var saved = false
++        val initialState =
++            EditRuleUiState(
++                name = "Valid Rule",
++                filters = listOf(Filter("pattern", MatchType.CONTAINS)),
++                isSaveEnabled = true,
++            )
++
++        composeTestRule.setContent {
++            EditRuleScreen(
++                uiState = initialState,
++                onEvent = {
++                    if (it is EditRuleEvent.SaveRule) saved = true
++                },
++                onNavigateBack = {},
++            )
++        }
++
++        composeTestRule.onNodeWithText("Save").performClick()
++        assert(saved)
++    }
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/RuleListScreen.kt b/app/src/main/java/net/dodiya/signalman/ui/RuleListScreen.kt
+new file mode 100644
+index 0000000..6e445c8
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/RuleListScreen.kt
+@@ -0,0 +1,390 @@
++package net.dodiya.signalman.ui
++
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Box
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.height
++import androidx.compose.foundation.layout.heightIn
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.lazy.LazyColumn
++import androidx.compose.foundation.lazy.items
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.automirrored.filled.List
++import androidx.compose.material.icons.filled.Add
++import androidx.compose.material.icons.filled.AutoAwesome
++import androidx.compose.material.icons.filled.Clear
++import androidx.compose.material.icons.filled.Delete
++import androidx.compose.material.icons.filled.Edit
++import androidx.compose.material.icons.filled.Search
++import androidx.compose.material.icons.filled.Settings
++import androidx.compose.material3.AlertDialog
++import androidx.compose.material3.Button
++import androidx.compose.material3.Card
++import androidx.compose.material3.ExperimentalMaterial3Api
++import androidx.compose.material3.FloatingActionButton
++import androidx.compose.material3.HorizontalDivider
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.ListItem
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.NavigationBar
++import androidx.compose.material3.NavigationBarItem
++import androidx.compose.material3.OutlinedCard
++import androidx.compose.material3.OutlinedTextField
++import androidx.compose.material3.RadioButton
++import androidx.compose.material3.Scaffold
++import androidx.compose.material3.Switch
++import androidx.compose.material3.Text
++import androidx.compose.material3.TextButton
++import androidx.compose.material3.TopAppBar
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.collectAsState
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableIntStateOf
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.platform.testTag
++import androidx.compose.ui.unit.dp
++import net.dodiya.signalman.data.AppInfo
++import net.dodiya.signalman.data.Rule
++
++@OptIn(ExperimentalMaterial3Api::class)
++@Composable
++fun RuleListScreen(
++    viewModel: RuleViewModel,
++    onAddRule: (String, String) -> Unit,
++    onEditRule: (Int) -> Unit,
++    onNavigateToSettings: () -> Unit = {},
++) {
++    val rules by viewModel.allRules.collectAsState()
++    val installedApps by viewModel.installedApps.collectAsState()
++    val globalDefault by viewModel.globalDefaultPackage.collectAsState()
++    val isAutoEnabled by viewModel.isAutoRuleGenerationEnabled.collectAsState()
++
++    var selectedTab by remember { mutableIntStateOf(0) }
++    var showAddRuleDialog by remember { mutableStateOf(false) }
++
++    val filteredRules =
++        remember(rules, selectedTab) {
++            when (selectedTab) {
++                0 -> rules.filter { !it.isAutoGenerated }
++                1 -> rules.filter { it.isAutoGenerated }
++                else -> emptyList()
++            }
++        }
++
++    Scaffold(
++        topBar = {
++            TopAppBar(
++                title = { Text("Signalman") },
++            )
++        },
++        bottomBar = {
++            NavigationBar {
++                NavigationBarItem(
++                    selected = selectedTab == 0,
++                    onClick = { selectedTab = 0 },
++                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
++                    label = { Text("Custom") },
++                )
++                NavigationBarItem(
++                    selected = selectedTab == 1,
++                    onClick = { selectedTab = 1 },
++                    icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
++                    label = { Text("Auto") },
++                )
++                NavigationBarItem(
++                    selected = false,
++                    onClick = onNavigateToSettings,
++                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
++                    label = { Text("Settings") },
++                )
++            }
++        },
++        floatingActionButton = {
++            if (selectedTab == 0) {
++                FloatingActionButton(
++                    onClick = { showAddRuleDialog = true },
++                    modifier = Modifier.padding(bottom = 16.dp),
++                ) {
++                    Icon(Icons.Default.Add, contentDescription = "Add Rule")
++                }
++            }
++        },
++    ) { padding ->
++        Column(modifier = Modifier.padding(padding)) {
++            if (selectedTab == 1) {
++                AutoRulesHeader(
++                    isAutoEnabled = isAutoEnabled,
++                    onAutoEnabledChange = { viewModel.setAutoRuleGenerationEnabled(it) },
++                    globalDefault = globalDefault,
++                    installedApps = installedApps,
++                    onSelectDefault = { viewModel.setGlobalDefault(it) },
++                )
++                HorizontalDivider()
++            }
++
++            if (filteredRules.isEmpty()) {
++                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
++                    Text(if (selectedTab == 0) "No custom rules yet." else "No auto-generated rules yet.")
++                }
++            } else {
++                LazyColumn(modifier = Modifier.fillMaxSize()) {
++                    items(filteredRules) { rule ->
++                        RuleItem(
++                            rule = rule,
++                            onDelete = { viewModel.delete(rule) },
++                            onEdit = { onEditRule(rule.id) },
++                        )
++                    }
++                }
++            }
++        }
++
++        if (showAddRuleDialog) {
++            AddRuleDialog(
++                onDismiss = { showAddRuleDialog = false },
++                onConfirm = { name, url ->
++                    showAddRuleDialog = false
++                    onAddRule(name, url)
++                },
++            )
++        }
++    }
++}
++
++@Composable
++fun AutoRulesHeader(
++    isAutoEnabled: Boolean,
++    onAutoEnabledChange: (Boolean) -> Unit,
++    globalDefault: String?,
++    installedApps: List<AppInfo>,
++    onSelectDefault: (String?) -> Unit,
++) {
++    var showAppPicker by remember { mutableStateOf(false) }
++
++    Column(modifier = Modifier.padding(16.dp)) {
++        Row(verticalAlignment = Alignment.CenterVertically) {
++            Column(modifier = Modifier.weight(1f)) {
++                Text("Enable auto rule generation", style = MaterialTheme.typography.titleMedium)
++                Text(
++                    "Prompt to create rules for new links",
++                    style = MaterialTheme.typography.bodySmall,
++                    color = MaterialTheme.colorScheme.outline,
++                )
++            }
++            Switch(checked = isAutoEnabled, onCheckedChange = onAutoEnabledChange)
++        }
++
++        if (!isAutoEnabled) {
++            Spacer(modifier = Modifier.height(16.dp))
++            Text("Fallback Action", style = MaterialTheme.typography.labelLarge)
++
++            val selectedAppName = installedApps.find { it.packageName == globalDefault }?.name ?: "System Chooser"
++
++            OutlinedCard(
++                modifier =
++                    Modifier
++                        .fillMaxWidth()
++                        .padding(vertical = 8.dp)
++                        .clickable { showAppPicker = true },
++            ) {
++                Row(
++                    modifier = Modifier.padding(16.dp),
++                    verticalAlignment = Alignment.CenterVertically,
++                ) {
++                    Column(modifier = Modifier.weight(1f)) {
++                        Text("Default App", style = MaterialTheme.typography.labelSmall)
++                        Text(selectedAppName, style = MaterialTheme.typography.bodyLarge)
++                    }
++                    if (globalDefault != null) {
++                        IconButton(onClick = { onSelectDefault(null) }) {
++                            Icon(Icons.Default.Clear, contentDescription = "Clear Default")
++                        }
++                    }
++                }
++            }
++        }
++    }
++
++    if (showAppPicker) {
++        AppPickerDialog(
++            currentDefault = globalDefault,
++            installedApps = installedApps,
++            onDismiss = { showAppPicker = false },
++            onSelect = {
++                onSelectDefault(it)
++                showAppPicker = false
++            },
++        )
++    }
++}
++
++@Composable
++fun AppPickerDialog(
++    currentDefault: String?,
++    installedApps: List<AppInfo>,
++    onDismiss: () -> Unit,
++    onSelect: (String?) -> Unit,
++) {
++    var searchQuery by remember { mutableStateOf("") }
++    val filteredApps =
++        remember(searchQuery, installedApps) {
++            installedApps.filter {
++                it.name.contains(searchQuery, ignoreCase = true) ||
++                    it.packageName.contains(searchQuery, ignoreCase = true)
++            }
++        }
++
++    AlertDialog(
++        onDismissRequest = onDismiss,
++        title = { Text("Select Default App") },
++        text = {
++            Column(modifier = Modifier.heightIn(max = 400.dp)) {
++                OutlinedTextField(
++                    value = searchQuery,
++                    onValueChange = { searchQuery = it },
++                    label = { Text("Search Apps") },
++                    modifier = Modifier.fillMaxWidth(),
++                    leadingIcon = { Icon(Icons.Default.Search, null) },
++                    trailingIcon = {
++                        if (searchQuery.isNotEmpty()) {
++                            IconButton(
++                                onClick = { searchQuery = "" },
++                            ) { Icon(Icons.Default.Clear, null) }
++                        }
++                    },
++                )
++
++                Spacer(modifier = Modifier.height(8.dp))
++
++                LazyColumn(modifier = Modifier.weight(1f)) {
++                    item {
++                        ListItem(
++                            headlineContent = { Text("System Chooser (None)") },
++                            modifier = Modifier.clickable { onSelect(null) },
++                            trailingContent = { if (currentDefault == null) RadioButton(selected = true, onClick = null) },
++                        )
++                    }
++                    items(filteredApps) { app ->
++                        ListItem(
++                            headlineContent = { Text(app.name) },
++                            supportingContent = { Text(app.packageName) },
++                            modifier = Modifier.clickable { onSelect(app.packageName) },
++                            trailingContent = { if (currentDefault == app.packageName) RadioButton(selected = true, onClick = null) },
++                        )
++                    }
++                }
++            }
++        },
++        confirmButton = {
++            TextButton(onClick = onDismiss) { Text("Cancel") }
++        },
++    )
++}
++
++@Composable
++fun AddRuleDialog(
++    onDismiss: () -> Unit,
++    onConfirm: (String, String) -> Unit,
++) {
++    var ruleName by remember { mutableStateOf("") }
++    var exampleUrl by remember { mutableStateOf("") }
++
++    AlertDialog(
++        onDismissRequest = onDismiss,
++        title = { Text("New Rule") },
++        text = {
++            Column {
++                Text("Enter rule details", style = MaterialTheme.typography.bodyMedium)
++                Spacer(modifier = Modifier.height(8.dp))
++                OutlinedTextField(
++                    value = ruleName,
++                    onValueChange = { ruleName = it },
++                    label = { Text("Rule Name") },
++                    singleLine = true,
++                    modifier = Modifier.fillMaxWidth().testTag("rule_name_input"),
++                )
++                Spacer(modifier = Modifier.height(8.dp))
++                OutlinedTextField(
++                    value = exampleUrl,
++                    onValueChange = { exampleUrl = it },
++                    label = { Text("Example URL (Optional)") },
++                    placeholder = { Text("https://x.com/post/123") },
++                    singleLine = true,
++                    modifier = Modifier.fillMaxWidth().testTag("example_url_input"),
++                )
++                Text(
++                    "Provide a sample link to test your rules live.",
++                    style = MaterialTheme.typography.labelSmall,
++                    color = MaterialTheme.colorScheme.outline,
++                    modifier = Modifier.padding(top = 4.dp),
++                )
++            }
++        },
++        confirmButton = {
++            Button(
++                onClick = { if (ruleName.isNotBlank()) onConfirm(ruleName, exampleUrl) },
++                enabled = ruleName.isNotBlank(),
++            ) {
++                Text("Next")
++            }
++        },
++        dismissButton = {
++            TextButton(onClick = onDismiss) {
++                Text("Cancel")
++            }
++        },
++    )
++}
++
++@Composable
++fun RuleItem(
++    rule: Rule,
++    onDelete: () -> Unit,
++    onEdit: () -> Unit,
++) {
++    Card(
++        modifier =
++            Modifier
++                .fillMaxWidth()
++                .padding(horizontal = 8.dp, vertical = 4.dp)
++                .clickable { onEdit() },
++    ) {
++        Row(
++            modifier =
++                Modifier
++                    .padding(16.dp)
++                    .fillMaxWidth(),
++            horizontalArrangement = Arrangement.SpaceBetween,
++            verticalAlignment = Alignment.CenterVertically,
++        ) {
++            Column(modifier = Modifier.weight(1f)) {
++                Text(text = rule.name, style = MaterialTheme.typography.titleMedium, maxLines = 1)
++                Text(
++                    text = rule.pattern,
++                    style = MaterialTheme.typography.bodySmall,
++                    maxLines = 1,
++                    color = MaterialTheme.colorScheme.outline,
++                )
++                Text(text = "→ ${rule.targetPackage ?: "Chooser"}", style = MaterialTheme.typography.labelSmall)
++            }
++            Row {
++                IconButton(onClick = onEdit) {
++                    Icon(Icons.Default.Edit, contentDescription = "Edit")
++                }
++                IconButton(onClick = onDelete) {
++                    Icon(Icons.Default.Delete, contentDescription = "Delete")
++                }
++            }
++        }
++    }
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/RuleViewModel.kt b/app/src/main/java/net/dodiya/signalman/ui/RuleViewModel.kt
+new file mode 100644
+index 0000000..a9567f9
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/RuleViewModel.kt
+@@ -0,0 +1,129 @@
++package net.dodiya.signalman.ui
++
++import android.app.Application
++import android.content.Intent
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.viewModelScope
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.flow.MutableStateFlow
++import kotlinx.coroutines.flow.SharingStarted
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.flow.asStateFlow
++import kotlinx.coroutines.flow.stateIn
++import kotlinx.coroutines.launch
++import net.dodiya.signalman.data.AppInfo
++import net.dodiya.signalman.data.PreferenceManager
++import net.dodiya.signalman.data.Rule
++import net.dodiya.signalman.data.RuleRepository
++import net.dodiya.signalman.domain.MatchRuleUseCase
++import net.dodiya.signalman.domain.TransformUrlUseCase
++
++class RuleViewModel(
++    private val application: Application,
++    private val repository: RuleRepository,
++    private val preferenceManager: PreferenceManager,
++    val matchRuleUseCase: MatchRuleUseCase,
++    val transformUrlUseCase: TransformUrlUseCase,
++) : ViewModel() {
++    val allRules: StateFlow<List<Rule>>
++
++    companion object {
++        private const val SUBSCRIBE_TIMEOUT_MS = 5000L
++    }
++
++    private val _installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
++    val installedApps: StateFlow<List<AppInfo>> = _installedApps.asStateFlow()
++
++    val globalDefaultPackage: StateFlow<String?> =
++        preferenceManager.globalDefaultPackage
++            .stateIn(
++                scope = viewModelScope,
++                started = SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS),
++                initialValue = null,
++            )
++
++    val isAutoRuleGenerationEnabled: StateFlow<Boolean> =
++        preferenceManager.isAutoRuleGenerationEnabled
++            .stateIn(
++                scope = viewModelScope,
++                started = SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS),
++                initialValue = true,
++            )
++
++    init {
++        allRules =
++            repository.allRules.stateIn(
++                scope = viewModelScope,
++                started = SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS),
++                initialValue = emptyList(),
++            )
++        loadInstalledApps()
++    }
++
++    private fun loadInstalledApps() {
++        viewModelScope.launch(Dispatchers.IO) {
++            val pm = application.packageManager
++            val mainIntent = Intent(Intent.ACTION_MAIN, null)
++            mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
++            val resolveInfos = pm.queryIntentActivities(mainIntent, 0)
++
++            val apps =
++                resolveInfos
++                    .map {
++                        AppInfo(
++                            name = it.loadLabel(pm).toString(),
++                            packageName = it.activityInfo.packageName,
++                            icon = it.loadIcon(pm),
++                        )
++                    }.distinctBy { it.packageName }
++                    .sortedBy { it.name }
++
++            _installedApps.value = apps
++        }
++    }
++
++    fun setGlobalDefault(packageName: String?) {
++        viewModelScope.launch {
++            preferenceManager.setGlobalDefault(packageName)
++        }
++    }
++
++    fun setAutoRuleGenerationEnabled(enabled: Boolean) {
++        viewModelScope.launch {
++            preferenceManager.setAutoRuleGenerationEnabled(enabled)
++        }
++    }
++
++    fun setAlwaysChoiceForUrl(
++        url: String,
++        packageName: String,
++    ) {
++        viewModelScope.launch {
++            preferenceManager.setAlwaysChoiceForUrl(url, packageName)
++        }
++    }
++
++    fun setAlwaysChoiceForDomain(
++        domain: String,
++        packageName: String,
++    ) {
++        viewModelScope.launch {
++            preferenceManager.setAlwaysChoiceForDomain(domain, packageName)
++        }
++    }
++
++    fun insert(rule: Rule) =
++        viewModelScope.launch {
++            repository.insert(rule)
++        }
++
++    fun update(rule: Rule) =
++        viewModelScope.launch {
++            repository.update(rule)
++        }
++
++    fun delete(rule: Rule) =
++        viewModelScope.launch {
++            repository.delete(rule)
++        }
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/components/AppListItem.kt b/app/src/main/java/net/dodiya/signalman/ui/components/AppListItem.kt
+new file mode 100644
+index 0000000..a314cd1
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/components/AppListItem.kt
+@@ -0,0 +1,61 @@
++package net.dodiya.signalman.ui.components
++
++import androidx.compose.foundation.BorderStroke
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.padding
++import androidx.compose.material3.Card
++import androidx.compose.material3.CardDefaults
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.RadioButton
++import androidx.compose.material3.Text
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.unit.dp
++
++@Composable
++fun AppListItem(
++    name: String,
++    packageName: String,
++    isSelected: Boolean,
++    onClick: () -> Unit,
++    modifier: Modifier = Modifier,
++) {
++    Card(
++        modifier =
++            modifier
++                .fillMaxWidth()
++                .clickable(onClick = onClick),
++        colors =
++            CardDefaults.cardColors(
++                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
++            ),
++        border = if (isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
++    ) {
++        Row(
++            modifier = Modifier.padding(12.dp),
++            verticalAlignment = Alignment.CenterVertically,
++        ) {
++            Column(modifier = Modifier.weight(1f)) {
++                Text(
++                    text = name,
++                    style = MaterialTheme.typography.bodyLarge,
++                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
++                )
++                Text(
++                    text = packageName,
++                    style = MaterialTheme.typography.bodySmall,
++                    color = MaterialTheme.colorScheme.onSurfaceVariant,
++                )
++            }
++            RadioButton(
++                selected = isSelected,
++                onClick = onClick,
++            )
++        }
++    }
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/components/ComponentItem.kt b/app/src/main/java/net/dodiya/signalman/ui/components/ComponentItem.kt
+new file mode 100644
+index 0000000..c5e8f3b
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/components/ComponentItem.kt
+@@ -0,0 +1,142 @@
++package net.dodiya.signalman.ui.components
++
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.layout.size
++import androidx.compose.foundation.layout.width
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
++import androidx.compose.material.icons.filled.Clear
++import androidx.compose.material.icons.filled.Edit
++import androidx.compose.material3.AlertDialog
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.OutlinedTextField
++import androidx.compose.material3.Text
++import androidx.compose.material3.TextButton
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.unit.dp
++
++@Composable
++fun ComponentItem(
++    label: String,
++    originalValue: String,
++    replacementValue: String?,
++    onReplacementChange: (String) -> Unit,
++    modifier: Modifier = Modifier,
++) {
++    var showDialog by remember { mutableStateOf(false) }
++
++    Row(
++        modifier = modifier.fillMaxWidth().padding(vertical = 12.dp),
++        verticalAlignment = Alignment.CenterVertically,
++    ) {
++        Column(modifier = Modifier.weight(1f)) {
++            Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
++            Row(verticalAlignment = Alignment.CenterVertically) {
++                Text(
++                    text = originalValue,
++                    style = MaterialTheme.typography.bodyMedium,
++                    color = if (replacementValue != null) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurfaceVariant,
++                )
++                if (replacementValue != null) {
++                    Spacer(modifier = Modifier.width(8.dp))
++                    Icon(
++                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
++                        contentDescription = null,
++                        modifier = Modifier.size(16.dp),
++                        tint = MaterialTheme.colorScheme.primary,
++                    )
++                    Spacer(modifier = Modifier.width(8.dp))
++                    Text(
++                        text = replacementValue,
++                        style = MaterialTheme.typography.bodyMedium,
++                        color = MaterialTheme.colorScheme.primary,
++                        fontWeight = FontWeight.Bold,
++                    )
++                }
++            }
++        }
++        IconButton(onClick = { showDialog = true }) {
++            Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(20.dp))
++        }
++    }
++
++    if (showDialog) {
++        EditValueDialog(
++            label = label,
++            initialValue = replacementValue ?: originalValue,
++            hasReplacement = replacementValue != null,
++            onDismiss = { showDialog = false },
++            onApply = {
++                onReplacementChange(it)
++                showDialog = false
++            },
++            onReset = {
++                onReplacementChange("")
++                showDialog = false
++            },
++        )
++    }
++}
++
++@Composable
++private fun EditValueDialog(
++    label: String,
++    initialValue: String,
++    hasReplacement: Boolean,
++    onDismiss: () -> Unit,
++    onApply: (String) -> Unit,
++    onReset: () -> Unit,
++) {
++    var editValue by remember { mutableStateOf(initialValue) }
++
++    AlertDialog(
++        onDismissRequest = onDismiss,
++        title = { Text("Edit $label") },
++        text = {
++            OutlinedTextField(
++                value = editValue,
++                onValueChange = { editValue = it },
++                label = { Text("Replacement") },
++                singleLine = true,
++                modifier = Modifier.fillMaxWidth(),
++                trailingIcon = {
++                    if (editValue.isNotEmpty()) {
++                        IconButton(onClick = { editValue = "" }) {
++                            Icon(Icons.Default.Clear, contentDescription = "Clear")
++                        }
++                    }
++                },
++            )
++        },
++        confirmButton = {
++            TextButton(onClick = { onApply(editValue) }) {
++                Text("Apply")
++            }
++        },
++        dismissButton = {
++            Row {
++                if (hasReplacement) {
++                    TextButton(onClick = onReset) {
++                        Text("Reset", color = MaterialTheme.colorScheme.error)
++                    }
++                }
++                TextButton(onClick = onDismiss) {
++                    Text("Cancel")
++                }
++            }
++        },
++    )
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/components/LivePreviewHeader.kt b/app/src/main/java/net/dodiya/signalman/ui/components/LivePreviewHeader.kt
+new file mode 100644
+index 0000000..54fc785
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/components/LivePreviewHeader.kt
+@@ -0,0 +1,73 @@
++package net.dodiya.signalman.ui.components
++
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.height
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.layout.size
++import androidx.compose.foundation.layout.width
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.filled.CheckCircle
++import androidx.compose.material.icons.filled.Error
++import androidx.compose.material3.Card
++import androidx.compose.material3.CardDefaults
++import androidx.compose.material3.Icon
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.Text
++import androidx.compose.runtime.Composable
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.text.font.FontWeight
++import androidx.compose.ui.unit.dp
++
++@Composable
++fun LivePreviewHeader(
++    exampleUrl: String,
++    isMatch: Boolean,
++    transformedUrl: String?,
++    modifier: Modifier = Modifier,
++) {
++    Card(
++        modifier = modifier.fillMaxWidth(),
++        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
++    ) {
++        Column(modifier = Modifier.padding(16.dp)) {
++            Text(
++                text = "Live Preview",
++                style = MaterialTheme.typography.titleMedium,
++                fontWeight = FontWeight.Bold,
++            )
++            Spacer(modifier = Modifier.height(8.dp))
++            Row(verticalAlignment = Alignment.CenterVertically) {
++                Icon(
++                    if (isMatch) Icons.Default.CheckCircle else Icons.Default.Error,
++                    contentDescription = null,
++                    tint = if (isMatch) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
++                    modifier = Modifier.size(20.dp),
++                )
++                Spacer(modifier = Modifier.width(8.dp))
++                Text(
++                    text = if (isMatch) "Matches" else "Does Not Match",
++                    style = MaterialTheme.typography.bodyMedium,
++                    fontWeight = FontWeight.Medium,
++                )
++            }
++
++            Spacer(modifier = Modifier.height(12.dp))
++
++            Text(
++                text = "Original: $exampleUrl",
++                style = MaterialTheme.typography.bodySmall,
++            )
++            if (transformedUrl != null && transformedUrl != exampleUrl) {
++                Text(
++                    text = "Result: $transformedUrl",
++                    style = MaterialTheme.typography.bodySmall,
++                )
++            }
++        }
++    }
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/editrule/ConditionsSection.kt b/app/src/main/java/net/dodiya/signalman/ui/editrule/ConditionsSection.kt
+new file mode 100644
+index 0000000..e994991
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/editrule/ConditionsSection.kt
+@@ -0,0 +1,168 @@
++package net.dodiya.signalman.ui.editrule
++
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.layout.size
++import androidx.compose.foundation.layout.width
++import androidx.compose.foundation.rememberScrollState
++import androidx.compose.foundation.verticalScroll
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
++import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
++import androidx.compose.material.icons.filled.Code
++import androidx.compose.material.icons.filled.Language
++import androidx.compose.material.icons.filled.TextFields
++import androidx.compose.material3.ExperimentalMaterial3Api
++import androidx.compose.material3.FilterChip
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.OutlinedTextField
++import androidx.compose.material3.Text
++import androidx.compose.material3.TextButton
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.graphics.vector.ImageVector
++import androidx.compose.ui.unit.dp
++import net.dodiya.signalman.data.Filter
++import net.dodiya.signalman.data.LogicalOperator
++import net.dodiya.signalman.data.MatchType
++import net.dodiya.signalman.ui.editrule.EditRuleEvent
++
++@OptIn(ExperimentalMaterial3Api::class)
++@Composable
++fun ConditionsSection(
++    filters: List<Filter>,
++    onEvent: (EditRuleEvent) -> Unit,
++    logicalOperator: LogicalOperator,
++    individualMatches: List<Boolean?>,
++    modifier: Modifier = Modifier,
++) {
++    Column(
++        modifier =
++            modifier
++                .fillMaxSize()
++                .verticalScroll(rememberScrollState()),
++    ) {
++        if (filters.size > 1) {
++            Row(
++                verticalAlignment = Alignment.CenterVertically,
++                horizontalArrangement = Arrangement.spacedBy(16.dp),
++                modifier = Modifier.padding(vertical = 8.dp),
++            ) {
++                Text("Operator:", style = MaterialTheme.typography.bodyMedium)
++                FilterChip(
++                    selected = logicalOperator == LogicalOperator.AND,
++                    onClick = { onEvent(EditRuleEvent.LogicalOperatorChanged(LogicalOperator.AND)) },
++                    label = { Text("AND") },
++                )
++                FilterChip(
++                    selected = logicalOperator == LogicalOperator.OR,
++                    onClick = { onEvent(EditRuleEvent.LogicalOperatorChanged(LogicalOperator.OR)) },
++                    label = { Text("OR") },
++                )
++            }
++        }
++
++        filters.forEachIndexed { index, filter ->
++            val filterPasses = individualMatches.getOrNull(index)
++            var expanded by remember { mutableStateOf(false) }
++
++            Row(
++                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
++                verticalAlignment = Alignment.CenterVertically,
++            ) {
++                OutlinedTextField(
++                    value = filter.pattern,
++                    onValueChange = { onEvent(EditRuleEvent.FilterChanged(index, filter.copy(pattern = it))) },
++                    placeholder = { Text("Pattern", style = MaterialTheme.typography.bodySmall) },
++                    modifier = Modifier.weight(1f),
++                    leadingIcon = {
++                        androidx.compose.foundation.layout.Box {
++                            IconButton(onClick = { expanded = true }) {
++                                Icon(
++                                    imageVector = getMatchTypeIcon(filter.matchType),
++                                    contentDescription = filter.matchType.userFriendlyName,
++                                    tint = MaterialTheme.colorScheme.primary,
++                                    modifier = Modifier.size(20.dp),
++                                )
++                            }
++                            androidx.compose.material3.DropdownMenu(
++                                expanded = expanded,
++                                onDismissRequest = { expanded = false },
++                            ) {
++                                MatchType.entries.forEach { type ->
++                                    androidx.compose.material3.DropdownMenuItem(
++                                        text = { Text(type.userFriendlyName) },
++                                        leadingIcon = {
++                                            Icon(
++                                                getMatchTypeIcon(type),
++                                                contentDescription = null,
++                                                modifier = Modifier.size(18.dp),
++                                            )
++                                        },
++                                        onClick = {
++                                            onEvent(EditRuleEvent.FilterChanged(index, filter.copy(matchType = type)))
++                                            expanded = false
++                                        },
++                                    )
++                                }
++                            }
++                        }
++                    },
++                    trailingIcon = {
++                        if (filterPasses != null) {
++                            Icon(
++                                if (filterPasses) Icons.Default.CheckCircle else Icons.Default.Error,
++                                contentDescription = null,
++                                tint = if (filterPasses) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
++                                modifier = Modifier.size(20.dp),
++                            )
++                        }
++                    },
++                    textStyle = MaterialTheme.typography.bodySmall,
++                    singleLine = true,
++                )
++
++                if (filters.size > 1) {
++                    IconButton(onClick = { onEvent(EditRuleEvent.FilterRemoved(index)) }) {
++                        Icon(
++                            androidx.compose.material.icons.Icons.Default.Delete,
++                            contentDescription = "Remove",
++                            modifier = Modifier.size(20.dp),
++                        )
++                    }
++                }
++            }
++        }
++
++        TextButton(
++            onClick = { onEvent(EditRuleEvent.FilterAdded(Filter("", MatchType.CONTAINS))) },
++            modifier = Modifier.align(Alignment.End),
++        ) {
++            Icon(androidx.compose.material.icons.Icons.Default.Add, contentDescription = null)
++            Spacer(modifier = Modifier.width(4.dp))
++            Text("Add Condition")
++        }
++    }
++}
++
++private fun getMatchTypeIcon(type: MatchType): ImageVector =
++    when (type) {
++        MatchType.CONTAINS -> Icons.Default.Language
++        MatchType.EQUALS -> Icons.Default.TextFields
++        MatchType.STARTS_WITH -> Icons.AutoMirrored.Filled.KeyboardArrowRight
++        MatchType.ENDS_WITH -> Icons.AutoMirrored.Filled.KeyboardArrowLeft
++        MatchType.REGEX -> Icons.Default.Code
++    }
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/editrule/EditRuleScreen.kt b/app/src/main/java/net/dodiya/signalman/ui/editrule/EditRuleScreen.kt
+new file mode 100644
+index 0000000..c3db473
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/editrule/EditRuleScreen.kt
+@@ -0,0 +1,125 @@
++package net.dodiya.signalman.ui.editrule
++
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.height
++import androidx.compose.foundation.layout.padding
++import androidx.compose.material3.Button
++import androidx.compose.material3.ExperimentalMaterial3Api
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.Scaffold
++import androidx.compose.material3.Tab
++import androidx.compose.material3.TabRow
++import androidx.compose.material3.Text
++import androidx.compose.material3.TopAppBar
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableIntStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.unit.dp
++import net.dodiya.signalman.ui.editrule.EditRuleEvent
++import net.dodiya.signalman.ui.editrule.EditRuleUiState
++
++@OptIn(ExperimentalMaterial3Api::class)
++@Composable
++fun EditRuleScreen(
++    uiState: EditRuleUiState,
++    onEvent: (EditRuleEvent) -> Unit,
++    onNavigateBack: () -> Unit,
++    modifier: Modifier = Modifier,
++) {
++    var selectedTabIndex by remember { mutableIntStateOf(0) }
++    val tabs = listOf("Conditions", "Transformation", "Target App")
++
++    Scaffold(
++        modifier = modifier,
++        topBar = {
++            TopAppBar(
++                title = { Text(if (uiState.name.isNotBlank()) uiState.name else "Edit Rule") },
++                navigationIcon = {
++                    IconButton(onClick = onNavigateBack) {
++                        Icon(
++                            androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack,
++                            contentDescription = "Back",
++                        )
++                    }
++                },
++                actions = {
++                    Button(
++                        onClick = {
++                            onEvent(EditRuleEvent.SaveRule)
++                            onNavigateBack()
++                        },
++                        modifier = Modifier.padding(end = 8.dp),
++                        enabled = uiState.isSaveEnabled,
++                    ) {
++                        Text("Save")
++                    }
++                },
++            )
++        },
++    ) { padding ->
++        Column(modifier = Modifier.padding(padding)) {
++            TabRow(selectedTabIndex = selectedTabIndex) {
++                tabs.forEachIndexed { index, title ->
++                    Tab(
++                        selected = selectedTabIndex == index,
++                        onClick = { selectedTabIndex = index },
++                        text = { Text(title) },
++                    )
++                }
++            }
++
++            Column(
++                modifier =
++                    Modifier
++                        .fillMaxSize()
++                        .padding(horizontal = 16.dp),
++            ) {
++                Spacer(modifier = Modifier.height(16.dp))
++
++                if (uiState.exampleUrl.isNotBlank()) {
++                    net.dodiya.signalman.ui.components.LivePreviewHeader(
++                        exampleUrl = uiState.exampleUrl,
++                        isMatch = uiState.isPreviewMatch,
++                        transformedUrl = uiState.previewTransformedUrl,
++                    )
++                    Spacer(modifier = Modifier.height(24.dp))
++                }
++
++                androidx.compose.foundation.layout.Box(modifier = Modifier.weight(1f)) {
++                    when (selectedTabIndex) {
++                        0 ->
++                            ConditionsSection(
++                                filters = uiState.filters,
++                                onEvent = onEvent,
++                                logicalOperator = uiState.logicalOperator,
++                                individualMatches = uiState.individualFilterMatches,
++                            )
++                        1 ->
++                            TransformationSection(
++                                isTransformEnabled = uiState.isTransformEnabled,
++                                onEvent = onEvent,
++                                replacePattern = uiState.replacePattern,
++                                replacement = uiState.replacement,
++                                exampleUrl = uiState.exampleUrl,
++                                previewTransformedUrl = uiState.previewTransformedUrl,
++                                urlComponentReplacements = uiState.urlComponentReplacements,
++                                transformMode = uiState.transformMode,
++                            )
++                        2 ->
++                            TargetAppSection(
++                                targetPackage = uiState.targetPackage,
++                                onEvent = onEvent,
++                                installedApps = uiState.installedApps,
++                            )
++                    }
++                }
++            }
++        }
++    }
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/editrule/EditRuleViewModel.kt b/app/src/main/java/net/dodiya/signalman/ui/editrule/EditRuleViewModel.kt
+new file mode 100644
+index 0000000..8662da8
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/editrule/EditRuleViewModel.kt
+@@ -0,0 +1,354 @@
++package net.dodiya.signalman.ui
++
++import android.app.Application
++import android.content.Intent
++import android.net.Uri
++import androidx.core.net.toUri
++import androidx.lifecycle.SavedStateHandle
++import androidx.lifecycle.ViewModel
++import androidx.lifecycle.viewModelScope
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.flow.MutableStateFlow
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.flow.asStateFlow
++import kotlinx.coroutines.flow.update
++import kotlinx.coroutines.launch
++import net.dodiya.signalman.data.AppInfo
++import net.dodiya.signalman.data.Filter
++import net.dodiya.signalman.data.LogicalOperator
++import net.dodiya.signalman.data.MatchType
++import net.dodiya.signalman.data.Rule
++import net.dodiya.signalman.data.RuleRepository
++import net.dodiya.signalman.data.TransformMode
++import net.dodiya.signalman.data.UrlComponentReplacement
++import net.dodiya.signalman.domain.MatchRuleUseCase
++import net.dodiya.signalman.domain.TransformUrlUseCase
++
++data class EditRuleUiState(
++    val name: String = "",
++    val filters: List<Filter> = listOf(Filter("", MatchType.CONTAINS)),
++    val logicalOperator: LogicalOperator = LogicalOperator.AND,
++    val targetPackage: String? = null,
++    val isTransformEnabled: Boolean = false,
++    val replacePattern: String = "",
++    val replacement: String = "",
++    val urlComponentReplacements: List<UrlComponentReplacement> = emptyList(),
++    val transformMode: TransformMode = TransformMode.SIMPLE,
++    val exampleUrl: String = "",
++    val installedApps: List<AppInfo> = emptyList(),
++    val isPreviewMatch: Boolean = false,
++    val previewTransformedUrl: String? = null,
++    val isSaveEnabled: Boolean = false,
++    val individualFilterMatches: List<Boolean?> = emptyList(),
++)
++
++sealed class EditRuleEvent {
++    data class NameChanged(
++        val name: String,
++    ) : EditRuleEvent()
++
++    data class ExampleUrlChanged(
++        val url: String,
++    ) : EditRuleEvent()
++
++    data class FilterChanged(
++        val index: Int,
++        val filter: Filter,
++    ) : EditRuleEvent()
++
++    data class FilterAdded(
++        val filter: Filter,
++    ) : EditRuleEvent()
++
++    data class FilterRemoved(
++        val index: Int,
++    ) : EditRuleEvent()
++
++    data class LogicalOperatorChanged(
++        val operator: LogicalOperator,
++    ) : EditRuleEvent()
++
++    data class TargetPackageChanged(
++        val packageName: String?,
++    ) : EditRuleEvent()
++
++    data class TransformEnabledChanged(
++        val enabled: Boolean,
++    ) : EditRuleEvent()
++
++    data class ReplacePatternChanged(
++        val pattern: String,
++    ) : EditRuleEvent()
++
++    data class ReplacementChanged(
++        val replacement: String,
++    ) : EditRuleEvent()
++
++    data class UrlComponentReplacementChanged(
++        val replacement: UrlComponentReplacement,
++    ) : EditRuleEvent()
++
++    data class TransformModeChanged(
++        val mode: TransformMode,
++    ) : EditRuleEvent()
++
++    object SaveRule : EditRuleEvent()
++}
++
++class EditRuleViewModel(
++    private val repository: RuleRepository,
++    private val matchRuleUseCase: MatchRuleUseCase,
++    private val transformUrlUseCase: TransformUrlUseCase,
++    private val application: Application,
++    savedStateHandle: SavedStateHandle,
++) : ViewModel() {
++    private val ruleId: Int = savedStateHandle.get<Int>("ruleId") ?: -1
++    private val initialName: String? = savedStateHandle.get<String>("name")
++    private val initialExampleUrl: String? = savedStateHandle.get<String>("exampleUrl")
++
++    private val _uiState = MutableStateFlow(EditRuleUiState())
++    val uiState: StateFlow<EditRuleUiState> = _uiState.asStateFlow()
++
++    init {
++        loadRule()
++        loadInstalledApps()
++    }
++
++    private fun loadRule() {
++        if (ruleId != -1) {
++            viewModelScope.launch {
++                repository.getRule(ruleId)?.let { rule ->
++                    _uiState.update { currentState ->
++                        currentState.copy(
++                            name = rule.name,
++                            filters = rule.filters.ifEmpty { listOf(Filter("", MatchType.CONTAINS)) },
++                            logicalOperator = rule.logicalOperator,
++                            targetPackage = rule.targetPackage,
++                            isTransformEnabled = rule.isTransformEnabled,
++                            replacePattern = rule.replacePattern ?: "",
++                            replacement = rule.replacement ?: "",
++                            urlComponentReplacements = rule.urlComponentReplacements,
++                            transformMode = rule.transformMode,
++                            exampleUrl = rule.exampleUrl ?: initialExampleUrl ?: "",
++                        )
++                    }
++                    updatePreview()
++                }
++            }
++        } else {
++            // New rule
++            _uiState.update {
++                it.copy(
++                    name = initialName ?: "",
++                    exampleUrl = initialExampleUrl ?: "",
++                )
++            }
++            updatePreview()
++        }
++    }
++
++    private fun loadInstalledApps() {
++        viewModelScope.launch(Dispatchers.IO) {
++            val pm = application.packageManager
++
++            // Query for all apps that have a launcher activity
++            val mainIntent =
++                Intent(Intent.ACTION_MAIN, null).apply {
++                    addCategory(Intent.CATEGORY_LAUNCHER)
++                }
++            val launcherApps = pm.queryIntentActivities(mainIntent, 0)
++
++            // Query for apps that can specifically handle web URLs
++            val webIntent =
++                Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com")).apply {
++                    addCategory(Intent.CATEGORY_DEFAULT)
++                    addCategory(Intent.CATEGORY_BROWSABLE)
++                }
++            val webApps = pm.queryIntentActivities(webIntent, 0)
++
++            // Union of apps that can handle web URLs or have a launcher, excluding Signalman
++            val allRelevantApps = (launcherApps + webApps).distinctBy { it.activityInfo.packageName }
++
++            val myPackage = application.packageName
++            val apps =
++                allRelevantApps
++                    .filter { it.activityInfo.packageName != myPackage }
++                    .map {
++                        AppInfo(
++                            name = it.loadLabel(pm).toString(),
++                            packageName = it.activityInfo.packageName,
++                            icon = it.loadIcon(pm),
++                        )
++                    }.sortedBy { it.name }
++
++            _uiState.update { it.copy(installedApps = apps) }
++        }
++    }
++
++    fun onEvent(event: EditRuleEvent) {
++        when (event) {
++            is EditRuleEvent.NameChanged -> {
++                _uiState.update { it.copy(name = event.name) }
++            }
++            is EditRuleEvent.ExampleUrlChanged -> {
++                _uiState.update { it.copy(exampleUrl = event.url) }
++                updatePreview()
++            }
++            is EditRuleEvent.FilterChanged -> {
++                _uiState.update {
++                    val newFilters = it.filters.toMutableList()
++                    if (event.index in newFilters.indices) {
++                        newFilters[event.index] = event.filter
++                    }
++                    it.copy(filters = newFilters)
++                }
++                updatePreview()
++            }
++            is EditRuleEvent.FilterAdded -> {
++                _uiState.update { it.copy(filters = it.filters + event.filter) }
++                updatePreview()
++            }
++            is EditRuleEvent.FilterRemoved -> {
++                _uiState.update {
++                    val newFilters = it.filters.toMutableList()
++                    if (event.index in newFilters.indices) {
++                        newFilters.removeAt(event.index)
++                    }
++                    it.copy(filters = newFilters)
++                }
++                updatePreview()
++            }
++            is EditRuleEvent.LogicalOperatorChanged -> {
++                _uiState.update { it.copy(logicalOperator = event.operator) }
++                updatePreview()
++            }
++            is EditRuleEvent.TargetPackageChanged -> {
++                _uiState.update { it.copy(targetPackage = event.packageName) }
++            }
++            is EditRuleEvent.TransformEnabledChanged -> {
++                _uiState.update { it.copy(isTransformEnabled = event.enabled) }
++                updatePreview()
++            }
++            is EditRuleEvent.ReplacePatternChanged -> {
++                _uiState.update { it.copy(replacePattern = event.pattern) }
++                updatePreview()
++            }
++            is EditRuleEvent.ReplacementChanged -> {
++                _uiState.update { it.copy(replacement = event.replacement) }
++                updatePreview()
++            }
++            is EditRuleEvent.UrlComponentReplacementChanged -> {
++                _uiState.update { state ->
++                    val currentReplacements = state.urlComponentReplacements.toMutableList()
++                    val index = currentReplacements.indexOfFirst { it.component == event.replacement.component }
++                    if (index >= 0) {
++                        if (event.replacement.replacement.isEmpty() && !event.replacement.isEnabled) {
++                            currentReplacements.removeAt(index)
++                        } else {
++                            currentReplacements[index] = event.replacement
++                        }
++                    } else if (event.replacement.isEnabled || event.replacement.replacement.isNotEmpty()) {
++                        currentReplacements.add(event.replacement)
++                    }
++                    state.copy(urlComponentReplacements = currentReplacements)
++                }
++                updatePreview()
++            }
++            is EditRuleEvent.TransformModeChanged -> {
++                _uiState.update { it.copy(transformMode = event.mode) }
++                updatePreview()
++            }
++            EditRuleEvent.SaveRule -> {
++                saveRule()
++            }
++        }
++        validateSave()
++    }
++
++    private fun updatePreview() {
++        val state = _uiState.value
++        if (state.exampleUrl.isBlank()) {
++            _uiState.update { it.copy(isPreviewMatch = false, previewTransformedUrl = null, individualFilterMatches = emptyList()) }
++            return
++        }
++
++        // Check overall match
++        val rule =
++            Rule(
++                name = "Preview",
++                filters = state.filters,
++                logicalOperator = state.logicalOperator,
++                targetPackage = null,
++            )
++        val isMatch = matchRuleUseCase(state.exampleUrl, listOf(rule)).isNotEmpty()
++
++        // Check individual filters
++        val individualMatches =
++            state.filters.map { filter ->
++                if (filter.pattern.isBlank()) {
++                    null
++                } else {
++                    val singleFilterRule =
++                        Rule(
++                            name = "FilterPreview",
++                            filters = listOf(filter),
++                            targetPackage = null,
++                        )
++                    matchRuleUseCase(state.exampleUrl, listOf(singleFilterRule)).isNotEmpty()
++                }
++            }
++
++        // Check transform
++        var transformedUrl: String? = null
++        if (state.isTransformEnabled && isMatch) {
++            val transformRule =
++                rule.copy(
++                    isTransformEnabled = true,
++                    replacePattern = state.replacePattern.ifEmpty { null },
++                    replacement = state.replacement,
++                    urlComponentReplacements = state.urlComponentReplacements,
++                    transformMode = state.transformMode,
++                )
++            transformedUrl = transformUrlUseCase(state.exampleUrl.toUri(), transformRule).toString()
++        }
++
++        _uiState.update {
++            it.copy(
++                isPreviewMatch = isMatch,
++                previewTransformedUrl = transformedUrl,
++                individualFilterMatches = individualMatches,
++            )
++        }
++    }
++
++    private fun validateSave() {
++        val state = _uiState.value
++        val isValid = state.name.isNotBlank() && state.filters.all { it.pattern.isNotBlank() }
++        _uiState.update { it.copy(isSaveEnabled = isValid) }
++    }
++
++    private fun saveRule() {
++        viewModelScope.launch {
++            val state = _uiState.value
++            val rule =
++                Rule(
++                    id = if (ruleId == -1) 0 else ruleId,
++                    name = state.name,
++                    filters = state.filters,
++                    logicalOperator = state.logicalOperator,
++                    targetPackage = state.targetPackage,
++                    isTransformEnabled = state.isTransformEnabled,
++                    replacePattern = state.replacePattern.ifEmpty { null },
++                    replacement = state.replacement,
++                    urlComponentReplacements = state.urlComponentReplacements,
++                    transformMode = state.transformMode,
++                    exampleUrl = state.exampleUrl.ifEmpty { null },
++                )
++            if (ruleId == -1) {
++                repository.insert(rule)
++            } else {
++                repository.update(rule)
++            }
++        }
++    }
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/editrule/TargetAppSection.kt b/app/src/main/java/net/dodiya/signalman/ui/editrule/TargetAppSection.kt
+new file mode 100644
+index 0000000..2c8071f
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/editrule/TargetAppSection.kt
+@@ -0,0 +1,95 @@
++package net.dodiya.signalman.ui.editrule
++
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.height
++import androidx.compose.foundation.lazy.LazyColumn
++import androidx.compose.foundation.lazy.items
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.filled.Clear
++import androidx.compose.material.icons.filled.Search
++import androidx.compose.material3.ExperimentalMaterial3Api
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.OutlinedTextField
++import androidx.compose.material3.Text
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.unit.dp
++import net.dodiya.signalman.data.AppInfo
++import net.dodiya.signalman.ui.components.AppListItem
++import net.dodiya.signalman.ui.editrule.EditRuleEvent
++
++@OptIn(ExperimentalMaterial3Api::class)
++@Composable
++fun TargetAppSection(
++    targetPackage: String?,
++    onEvent: (EditRuleEvent) -> Unit,
++    installedApps: List<AppInfo>,
++    modifier: Modifier = Modifier,
++) {
++    var searchQuery by remember { mutableStateOf("") }
++
++    val filteredApps =
++        remember(searchQuery, installedApps) {
++            if (searchQuery.isBlank()) {
++                installedApps
++            } else {
++                installedApps.filter {
++                    it.name.contains(searchQuery, ignoreCase = true) ||
++                        it.packageName.contains(searchQuery, ignoreCase = true)
++                }
++            }
++        }
++
++    Column(modifier = modifier.fillMaxSize()) {
++        OutlinedTextField(
++            value = searchQuery,
++            onValueChange = { searchQuery = it },
++            label = { Text("Search App") },
++            modifier = Modifier.fillMaxWidth(),
++            trailingIcon = {
++                if (searchQuery.isNotEmpty()) {
++                    IconButton(onClick = { searchQuery = "" }) {
++                        Icon(Icons.Default.Clear, contentDescription = "Clear")
++                    }
++                } else {
++                    Icon(Icons.Default.Search, contentDescription = null)
++                }
++            },
++            singleLine = true,
++        )
++
++        Spacer(modifier = Modifier.height(16.dp))
++
++        LazyColumn(
++            modifier = Modifier.weight(1f),
++            verticalArrangement = Arrangement.spacedBy(8.dp),
++        ) {
++            item {
++                AppListItem(
++                    name = "System Chooser (Default)",
++                    packageName = "System will ask every time",
++                    isSelected = targetPackage == null,
++                    onClick = { onEvent(EditRuleEvent.TargetPackageChanged(null)) },
++                )
++            }
++
++            items(filteredApps, key = { it.packageName }) { app ->
++                AppListItem(
++                    name = app.name,
++                    packageName = app.packageName,
++                    isSelected = app.packageName == targetPackage,
++                    onClick = { onEvent(EditRuleEvent.TargetPackageChanged(app.packageName)) },
++                )
++            }
++        }
++    }
++}
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/editrule/TransformationSection.kt b/app/src/main/java/net/dodiya/signalman/ui/editrule/TransformationSection.kt
+new file mode 100644
+index 0000000..cc9e767
+--- /dev/null
++++ b/app/src/main/java/net/dodiya/signalman/ui/editrule/TransformationSection.kt
+@@ -0,0 +1,216 @@
++package net.dodiya.signalman.ui.editrule
++
++import androidx.compose.foundation.background
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.layout.Box
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.Spacer
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.height
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.layout.size
++import androidx.compose.foundation.layout.width
++import androidx.compose.foundation.rememberScrollState
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.foundation.verticalScroll
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.filled.Add
++import androidx.compose.material.icons.filled.Clear
++import androidx.compose.material.icons.filled.Edit
++import androidx.compose.material3.AlertDialog
++import androidx.compose.material3.ExperimentalMaterial3Api
++import androidx.compose.material3.HorizontalDivider
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.OutlinedButton
++import androidx.compose.material3.OutlinedTextField
++import androidx.compose.material3.Surface
++import androidx.compose.material3.Switch
++import androidx.compose.material3.Text
++import androidx.compose.material3.TextButton
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.unit.dp
++import net.dodiya.signalman.data.TransformMode
++import net.dodiya.signalman.data.UrlComponent
++import net.dodiya.signalman.data.UrlComponentReplacement
++import net.dodiya.signalman.data.UrlComponents
++import net.dodiya.signalman.ui.editrule.EditRuleEvent
++import net.dodiya.signalman.ui.components.ComponentItem
++
++@OptIn(ExperimentalMaterial3Api::class)
++@Composable
++fun TransformationSection(
++    isTransformEnabled: Boolean,
++    onEvent: (EditRuleEvent) -> Unit,
++    replacePattern: String,
++    replacement: String,
++    exampleUrl: String,
++    previewTransformedUrl: String?,
++    urlComponentReplacements: List<UrlComponentReplacement>,
++    transformMode: TransformMode,
++    modifier: Modifier = Modifier,
++) {
++    val parsedComponents =
++        remember(exampleUrl) {
++            if (exampleUrl.isNotBlank()) {
++                UrlComponents.parse(exampleUrl)
++            } else {
++                null
++            }
++        }
++
++    Column(
++        modifier =
++            modifier
++                .fillMaxSize()
++                .verticalScroll(rememberScrollState()),
++    ) {
++        Row(
++            verticalAlignment = Alignment.CenterVertically,
++            modifier = Modifier.fillMaxWidth(),
++        ) {
++            Text(
++                "Enable Transformation",
++                style = MaterialTheme.typography.bodyLarge,
++                modifier = Modifier.weight(1f),
++            )
++            Switch(
++                checked = isTransformEnabled,
++                onCheckedChange = { onEvent(EditRuleEvent.TransformEnabledChanged(it)) },
++            )
++        }
++
++        Spacer(modifier = Modifier.height(16.dp))
++
++        Surface(
++            modifier = Modifier.fillMaxWidth(),
++            shape = RoundedCornerShape(24.dp),
++            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
++        ) {
++            Row(modifier = Modifier.padding(4.dp)) {
++                val isSimple = transformMode == TransformMode.SIMPLE
++                Box(
++                    modifier =
++                        Modifier
++                            .weight(1f)
++                            .height(40.dp)
++                            .clip(RoundedCornerShape(20.dp))
++                            .background(
++                                if (isSimple) MaterialTheme.colorScheme.secondaryContainer
++                                else androidx.compose.ui.graphics.Color.Transparent,
++                            )
++                            .clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.SIMPLE)) },
++                    contentAlignment = Alignment.Center,
++                ) {
++                    Text(
++                        "Simple",
++                        style = MaterialTheme.typography.labelLarge,
++                        color = if (isSimple) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
++                    )
++                }
++                Box(
++                    modifier =
++                        Modifier
++                            .weight(1f)
++                            .height(40.dp)
++                            .clip(RoundedCornerShape(20.dp))
++                            .background(
++                                if (!isSimple) MaterialTheme.colorScheme.secondaryContainer
++                                else androidx.compose.ui.graphics.Color.Transparent,
++                            )
++                            .clickable { onEvent(EditRuleEvent.TransformModeChanged(TransformMode.ADVANCED)) },
++                    contentAlignment = Alignment.Center,
++                ) {
++                    Text(
++                        "Regex",
++                        style = MaterialTheme.typography.labelLarge,
++                        color = if (!isSimple) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
++                    )
++                }
++            }
++        }
++
++        Spacer(modifier = Modifier.height(24.dp))
++
++        if (transformMode == TransformMode.SIMPLE) {
++            val visibleComponents = listOf(UrlComponent.SCHEME, UrlComponent.HOST, UrlComponent.DOMAIN)
++            visibleComponents.forEach { component ->
++                val originalValue =
++                    when (component) {
++                        UrlComponent.SCHEME -> parsedComponents?.scheme ?: ""
++                        UrlComponent.HOST -> parsedComponents?.host ?: ""
++                        UrlComponent.DOMAIN -> parsedComponents?.domain ?: ""
++                        else -> ""
++                    }
++                val replacementData = urlComponentReplacements.find { it.component == component }
++
++                ComponentItem(
++                    label = component.displayName,
++                    originalValue = originalValue,
++                    replacementValue = replacementData?.replacement,
++                    onReplacementChange = { newValue ->
++                        onEvent(
++                            EditRuleEvent.UrlComponentReplacementChanged(
++                                UrlComponentReplacement(
++                                    component = component,
++                                    replacement = newValue,
++                                    isEnabled = newValue.isNotEmpty(),
++                                ),
++                            ),
++                        )
++                    },
++                )
++                HorizontalDivider()
++            }
++
++            Spacer(modifier = Modifier.height(16.dp))
++
++            OutlinedButton(
++                onClick = { /* TODO */ },
++                modifier = Modifier.height(40.dp),
++            ) {
++                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
++                Spacer(modifier = Modifier.width(8.dp))
++                Text("Add Component")
++            }
++        } else {
++            OutlinedTextField(
++                value = replacePattern,
++                onValueChange = { onEvent(EditRuleEvent.ReplacePatternChanged(it)) },
++                label = { Text("Match Pattern") },
++                modifier = Modifier.fillMaxWidth(),
++            )
++            Text(
++                "Hint Pattern Hint",
++                style = MaterialTheme.typography.bodySmall,
++                color = MaterialTheme.colorScheme.onSurfaceVariant,
++                modifier = Modifier.padding(top = 4.dp, start = 4.dp),
++            )
++
++            Spacer(modifier = Modifier.height(20.dp))
++
++            OutlinedTextField(
++                value = replacement,
++                onValueChange = { onEvent(EditRuleEvent.ReplacementChanged(it)) },
++                label = { Text("Substitution") },
++                modifier = Modifier.fillMaxWidth(),
++            )
++            Text(
++                "Substitution Hint",
++                style = MaterialTheme.typography.bodySmall,
++                color = MaterialTheme.colorScheme.onSurfaceVariant,
++                modifier = Modifier.padding(top = 4.dp, start = 4.dp),
++            )
++        }
++    }
++}
+\ No newline at end of file
+diff --git a/app/src/main/java/net/dodiya/signalman/ui/theme/Theme.kt b/app/src/main/java/net/dodiya/signalman/ui/theme/Theme.kt
+index 9eb4b21..15ba03e 100644
+--- a/app/src/main/java/net/dodiya/signalman/ui/theme/Theme.kt
++++ b/app/src/main/java/net/dodiya/signalman/ui/theme/Theme.kt
+@@ -1,7 +1,6 @@
+ package net.dodiya.signalman.ui.theme
+ 
+ import android.app.Activity
+-import android.os.Build
+ import androidx.compose.foundation.isSystemInDarkTheme
+ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.dynamicDarkColorScheme

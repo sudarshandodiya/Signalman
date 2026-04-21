@@ -18,9 +18,10 @@ class AppInfoRepository(
 
     suspend fun loadInstalledApps() {
         withContext(Dispatchers.IO) {
-            val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
-                addCategory(Intent.CATEGORY_LAUNCHER)
-            }
+            val mainIntent =
+                Intent(Intent.ACTION_MAIN, null).apply {
+                    addCategory(Intent.CATEGORY_LAUNCHER)
+                }
             val resolveInfos = packageManager.queryIntentActivities(mainIntent, 0)
 
             val apps =
