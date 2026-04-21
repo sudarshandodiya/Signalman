@@ -123,6 +123,22 @@ app/src/main/kotlin/net/dodiya/signalman/
    ./gradlew installDebug
    ```
 
+### Development Setup
+
+#### Git Hooks
+
+This project uses git hooks to ensure code quality. Install them by running:
+
+```bash
+./scripts/install-hooks.sh
+```
+
+The pre-commit hook will automatically:
+- Run `spotlessApply` to format your code
+- Run `detekt` to check code quality
+
+If either check fails, the commit will be blocked until issues are fixed.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.

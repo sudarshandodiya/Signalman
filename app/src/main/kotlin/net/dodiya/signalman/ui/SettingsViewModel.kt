@@ -74,8 +74,12 @@ class SettingsViewModel(
                     _importExportState.value = ImportExportState.Success("Exported ${rules.size} rules successfully")
                     return@collect
                 }
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                android.util.Log.e("SettingsViewModel", "Export failed", e)
                 _importExportState.value = ImportExportState.Error("Export failed: ${e.message}")
+            } catch (e: SecurityException) {
+                android.util.Log.e("SettingsViewModel", "Export failed: Permission denied", e)
+                _importExportState.value = ImportExportState.Error("Export failed: Permission denied")
             }
         }
     }
@@ -87,7 +91,7 @@ class SettingsViewModel(
                 val json =
                     context.contentResolver.openInputStream(uri)?.use { inputStream ->
                         inputStream.bufferedReader().readText()
-                    } ?: throw Exception("Could not read file")
+                    } ?: throw java.io.IOException("Could not read file")
 
                 val rules = RuleExporter.importRules(json)
                 if (rules.isNullOrEmpty()) {
@@ -98,8 +102,12 @@ class SettingsViewModel(
                 _pendingImportUri.value = uri
                 _pendingImportRules.value = rules
                 _importExportState.value = ImportExportState.Idle
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                android.util.Log.e("SettingsViewModel", "Import preview failed", e)
                 _importExportState.value = ImportExportState.Error("Import failed: ${e.message}")
+            } catch (e: SecurityException) {
+                android.util.Log.e("SettingsViewModel", "Import preview failed: Permission denied", e)
+                _importExportState.value = ImportExportState.Error("Import failed: Permission denied")
             }
         }
     }
@@ -112,8 +120,12 @@ class SettingsViewModel(
                 _importExportState.value = ImportExportState.Success("Imported ${rules.size} rules successfully")
                 _pendingImportRules.value = null
                 _pendingImportUri.value = null
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                android.util.Log.e("SettingsViewModel", "Import failed", e)
                 _importExportState.value = ImportExportState.Error("Import failed: ${e.message}")
+            } catch (e: SecurityException) {
+                android.util.Log.e("SettingsViewModel", "Import failed: Permission denied", e)
+                _importExportState.value = ImportExportState.Error("Import failed: Permission denied")
             }
         }
     }
@@ -122,12 +134,12 @@ class SettingsViewModel(
         viewModelScope.launch {
             _importExportState.value = ImportExportState.Loading
             try {
-                val uri = _pendingImportUri.value ?: throw Exception("No file selected")
+                val uri = _pendingImportUri.value ?: throw java.io.IOException("No file selected")
 
                 val json =
                     context.contentResolver.openInputStream(uri)?.use { inputStream ->
                         inputStream.bufferedReader().readText()
-                    } ?: throw Exception("Could not read file")
+                    } ?: throw java.io.IOException("Could not read file")
 
                 val rules = RuleExporter.importRules(json)
                 if (rules.isNullOrEmpty()) {
@@ -143,8 +155,12 @@ class SettingsViewModel(
                 _importExportState.value = ImportExportState.Success("Imported ${rules.size} rules successfully")
                 _pendingImportRules.value = null
                 _pendingImportUri.value = null
-            } catch (e: Exception) {
+            } catch (e: java.io.IOException) {
+                android.util.Log.e("SettingsViewModel", "Import failed", e)
                 _importExportState.value = ImportExportState.Error("Import failed: ${e.message}")
+            } catch (e: SecurityException) {
+                android.util.Log.e("SettingsViewModel", "Import failed: Permission denied", e)
+                _importExportState.value = ImportExportState.Error("Import failed: Permission denied")
             }
         }
     }

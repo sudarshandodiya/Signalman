@@ -57,8 +57,9 @@ fun AutoRulesHeader(
             Spacer(modifier = Modifier.height(16.dp))
             Text(stringResource(R.string.fallback_action), style = MaterialTheme.typography.labelLarge)
 
-            val selectedAppName = installedApps.find { it.packageName == globalDefault }?.name
-                ?: context.getString(R.string.system_chooser_none)
+            val selectedAppName =
+                installedApps.find { it.packageName == globalDefault }?.name
+                    ?: context.getString(R.string.system_chooser_none)
 
             OutlinedCard(
                 modifier =

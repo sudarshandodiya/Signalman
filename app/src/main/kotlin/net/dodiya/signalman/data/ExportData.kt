@@ -82,7 +82,11 @@ object RuleExporter {
         try {
             val exportData: ExportData = json.decodeFromString(jsonString)
             exportData.rules.map { it.toRule() }
-        } catch (e: Exception) {
+        } catch (e: kotlinx.serialization.SerializationException) {
+            android.util.Log.e("RuleExporter", "Failed to parse JSON", e)
+            null
+        } catch (e: IllegalArgumentException) {
+            android.util.Log.e("RuleExporter", "Invalid JSON format", e)
             null
         }
 }
