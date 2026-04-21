@@ -25,8 +25,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.data.Rule
 
 @Composable
@@ -40,6 +43,8 @@ internal fun ImportPreviewContent(
     onDeselectAll: () -> Unit,
     onToggleSelection: (Int) -> Unit,
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -55,12 +60,12 @@ internal fun ImportPreviewContent(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Select rules to import",
+                    text = stringResource(R.string.import_select_rules),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "${rules.size} rules found in file",
+                    text = context.getString(R.string.import_rules_found, rules.size),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Row(
@@ -71,10 +76,10 @@ internal fun ImportPreviewContent(
                     horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onSelectAll) {
-                        Text("Select All")
+                        Text(stringResource(R.string.action_select_all))
                     }
                     TextButton(onClick = onDeselectAll) {
-                        Text("Deselect All")
+                        Text(stringResource(R.string.action_deselect_all))
                     }
                 }
             }
@@ -120,8 +125,9 @@ internal fun ImportPreviewContent(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
+                            val targetLabel = rule.targetPackage ?: context.getString(R.string.system_chooser_none)
                             Text(
-                                text = "${rule.filters.size} filter(s) • ${rule.targetPackage ?: "System chooser"}",
+                                text = context.getString(R.string.import_filter_count, rule.filters.size, targetLabel),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.outline,
                             )
@@ -150,7 +156,7 @@ internal fun ImportPreviewContent(
                 modifier = Modifier.weight(1f),
                 enabled = !isLoading,
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
             Button(
                 onClick = onImport,
@@ -163,7 +169,7 @@ internal fun ImportPreviewContent(
                         strokeWidth = 2.dp,
                     )
                 } else {
-                    Text("Import (${selectedIndices.size})")
+                    Text(context.getString(R.string.import_count, selectedIndices.size))
                 }
             }
         }

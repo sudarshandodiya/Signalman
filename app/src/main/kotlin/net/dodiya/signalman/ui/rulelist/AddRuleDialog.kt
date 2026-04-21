@@ -18,7 +18,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 
 @Composable
 fun AddRuleDialog(
@@ -30,15 +32,15 @@ fun AddRuleDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New Rule") },
+        title = { Text(stringResource(R.string.title_new_rule)) },
         text = {
             Column {
-                Text("Enter rule details", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.rule_details_hint), style = MaterialTheme.typography.bodyMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = ruleName,
                     onValueChange = { ruleName = it },
-                    label = { Text("Rule Name") },
+                    label = { Text(stringResource(R.string.rule_name_label)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("rule_name_input"),
                 )
@@ -46,16 +48,10 @@ fun AddRuleDialog(
                 OutlinedTextField(
                     value = exampleUrl,
                     onValueChange = { exampleUrl = it },
-                    label = { Text("Example URL (Optional)") },
-                    placeholder = { Text("https://x.com/post/123") },
+                    label = { Text(stringResource(R.string.example_url_label)) },
+                    placeholder = { Text(stringResource(R.string.example_url_placeholder)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().testTag("example_url_input"),
-                )
-                Text(
-                    "Provide a sample link to test your rules live.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
         },
@@ -64,12 +60,12 @@ fun AddRuleDialog(
                 onClick = { if (ruleName.isNotBlank()) onConfirm(ruleName, exampleUrl) },
                 enabled = ruleName.isNotBlank(),
             ) {
-                Text("Next")
+                Text(stringResource(R.string.action_next))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         },
     )

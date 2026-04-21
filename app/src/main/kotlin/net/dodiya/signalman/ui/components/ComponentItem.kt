@@ -21,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.ui.components.dialog.EditValueDialog
 
 @Composable
@@ -34,6 +36,7 @@ fun ComponentItem(
     modifier: Modifier = Modifier,
 ) {
     var showDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Row(
         modifier = modifier.fillMaxWidth().padding(vertical = 12.dp),
@@ -66,7 +69,7 @@ fun ComponentItem(
             }
         }
         IconButton(onClick = { showDialog = true }) {
-            Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(20.dp))
+            Icon(Icons.Default.Edit, contentDescription = context.getString(R.string.cd_edit_component), modifier = Modifier.size(20.dp))
         }
     }
 

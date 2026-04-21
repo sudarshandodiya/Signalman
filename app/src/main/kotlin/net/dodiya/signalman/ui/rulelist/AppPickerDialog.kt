@@ -25,7 +25,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.data.AppInfo
 
 @Composable
@@ -46,20 +48,20 @@ fun AppPickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select Default App") },
+        title = { Text(stringResource(R.string.title_select_default_app)) },
         text = {
             Column(modifier = Modifier.heightIn(max = 400.dp)) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text("Search Apps") },
+                    label = { Text(stringResource(R.string.search_apps_label)) },
                     modifier = Modifier.fillMaxWidth(),
-                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(
                                 onClick = { searchQuery = "" },
-                            ) { Icon(Icons.Default.Clear, null) }
+                            ) { Icon(Icons.Default.Clear, contentDescription = null) }
                         }
                     },
                 )
@@ -69,7 +71,7 @@ fun AppPickerDialog(
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     item {
                         ListItem(
-                            headlineContent = { Text("System Chooser (None)") },
+                            headlineContent = { Text(stringResource(R.string.system_chooser_none)) },
                             modifier = Modifier.clickable { onSelect(null) },
                             trailingContent = { if (currentDefault == null) RadioButton(selected = true, onClick = null) },
                         )
@@ -86,7 +88,7 @@ fun AppPickerDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         },
     )
 }

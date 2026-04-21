@@ -38,7 +38,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 import net.dodiya.signalman.data.Filter
 import net.dodiya.signalman.data.LogicalOperator
 import net.dodiya.signalman.data.MatchType
@@ -53,6 +56,8 @@ fun ConditionsSection(
     individualMatches: List<Boolean?>,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier =
             modifier
@@ -65,16 +70,16 @@ fun ConditionsSection(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.padding(vertical = 8.dp),
             ) {
-                Text("Operator:", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.operator_label), style = MaterialTheme.typography.bodyMedium)
                 FilterChip(
                     selected = logicalOperator == LogicalOperator.AND,
                     onClick = { onEvent(EditRuleEvent.LogicalOperatorChanged(LogicalOperator.AND)) },
-                    label = { Text("AND") },
+                    label = { Text(stringResource(R.string.operator_and)) },
                 )
                 FilterChip(
                     selected = logicalOperator == LogicalOperator.OR,
                     onClick = { onEvent(EditRuleEvent.LogicalOperatorChanged(LogicalOperator.OR)) },
-                    label = { Text("OR") },
+                    label = { Text(stringResource(R.string.operator_or)) },
                 )
             }
         }
@@ -90,7 +95,7 @@ fun ConditionsSection(
                 OutlinedTextField(
                     value = filter.pattern,
                     onValueChange = { onEvent(EditRuleEvent.FilterChanged(index, filter.copy(pattern = it))) },
-                    placeholder = { Text("Pattern", style = MaterialTheme.typography.bodySmall) },
+                    placeholder = { Text(stringResource(R.string.pattern_placeholder), style = MaterialTheme.typography.bodySmall) },
                     modifier = Modifier.weight(1f),
                     leadingIcon = {
                         androidx.compose.foundation.layout.Box {
@@ -143,7 +148,7 @@ fun ConditionsSection(
                     IconButton(onClick = { onEvent(EditRuleEvent.FilterRemoved(index)) }) {
                         Icon(
                             androidx.compose.material.icons.Icons.Default.Delete,
-                            contentDescription = "Remove",
+                            contentDescription = context.getString(R.string.cd_remove_condition),
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -157,7 +162,7 @@ fun ConditionsSection(
         ) {
             Icon(androidx.compose.material.icons.Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(4.dp))
-            Text("Add Condition")
+            Text(stringResource(R.string.add_condition))
         }
     }
 }

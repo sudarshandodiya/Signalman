@@ -46,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import net.dodiya.signalman.R
 import net.dodiya.signalman.ui.settings.SettingsClickableItem
 import net.dodiya.signalman.ui.settings.SettingsHeader
 
@@ -113,10 +114,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.SemiBold) },
+                title = { Text(context.getString(R.string.title_settings), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = context.getString(R.string.action_back))
                     }
                 },
             )
@@ -130,13 +131,13 @@ fun SettingsScreen(
                     .padding(paddingValues),
         ) {
             item {
-                SettingsHeader("General")
+                SettingsHeader(context.getString(R.string.section_general))
             }
 
             item {
                 SettingsClickableItem(
-                    title = "Export Rules",
-                    subtitle = "Save all your rules to a JSON file",
+                    title = context.getString(R.string.export_rules_title),
+                    subtitle = context.getString(R.string.export_rules_subtitle),
                     icon = Icons.Default.FileUpload,
                     onClick = { exportLauncher.launch("signalman_rules.json") },
                 )
@@ -144,21 +145,21 @@ fun SettingsScreen(
 
             item {
                 SettingsClickableItem(
-                    title = "Import Rules",
-                    subtitle = "Load rules from a JSON file",
+                    title = context.getString(R.string.import_rules_title),
+                    subtitle = context.getString(R.string.import_rules_subtitle),
                     icon = Icons.Default.FileDownload,
                     onClick = { importLauncher.launch(arrayOf("application/json")) },
                 )
             }
 
             item {
-                SettingsHeader("Browsers")
+                SettingsHeader(context.getString(R.string.section_browsers))
             }
 
             item {
                 SettingsClickableItem(
-                    title = "Browser Visibility",
-                    subtitle = "Select which browsers to show in overlay",
+                    title = context.getString(R.string.browser_visibility_title),
+                    subtitle = context.getString(R.string.browser_visibility_subtitle),
                     icon = Icons.Default.Language,
                     onClick = { showBrowserDialog = true },
                 )
@@ -184,7 +185,7 @@ fun SettingsScreen(
     if (showBrowserDialog) {
         AlertDialog(
             onDismissRequest = { showBrowserDialog = false },
-            title = { Text("Browser Visibility") },
+            title = { Text(context.getString(R.string.title_browser_visibility)) },
             text = {
                 LazyColumn {
                     items(allBrowsers) { resolveInfo ->
@@ -235,7 +236,7 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showBrowserDialog = false }) {
-                    Text("Close")
+                    Text(context.getString(R.string.action_close))
                 }
             },
         )
