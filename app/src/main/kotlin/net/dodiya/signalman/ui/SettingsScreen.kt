@@ -38,7 +38,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +48,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +60,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val pm = context.packageManager
     val snackbarHostState = remember { SnackbarHostState() }
-    val importExportState by viewModel.importExportState.collectAsState()
+    val importExportState by viewModel.importExportState.collectAsStateWithLifecycle()
 
     val browserIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("http://"))
     val allBrowsers =
@@ -72,7 +72,7 @@ fun SettingsScreen(
                 .sortedBy { it.loadLabel(pm).toString() }
         }
 
-    val hiddenBrowsers by viewModel.hiddenBrowsers.collectAsState()
+    val hiddenBrowsers by viewModel.hiddenBrowsers.collectAsStateWithLifecycle()
     var showBrowserDialog by remember { mutableStateOf(false) }
 
     val exportLauncher =
@@ -89,7 +89,7 @@ fun SettingsScreen(
             uri?.let { viewModel.loadImportPreview(it) }
         }
 
-    val pendingImportRules by viewModel.pendingImportRules.collectAsState()
+    val pendingImportRules by viewModel.pendingImportRules.collectAsStateWithLifecycle()
 
     LaunchedEffect(pendingImportRules) {
         if (pendingImportRules != null) {
