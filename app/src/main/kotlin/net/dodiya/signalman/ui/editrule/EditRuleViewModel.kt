@@ -5,8 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.dodiya.signalman.data.AppInfoRepository
@@ -104,7 +106,13 @@ class EditRuleViewModel(
     private val _uiState = MutableStateFlow(EditRuleUiState())
     val uiState: StateFlow<EditRuleUiState> = _uiState.asStateFlow()
 
-    val installedApps = appInfoRepository.installedApps
+    val installedApps: StateFlow<List<net.dodiya.signalman.data.AppInfo>> =
+        appInfoRepository.installedApps
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000L),
+                initialValue = emptyList(),
+            )
 
     init {
         loadRule()
