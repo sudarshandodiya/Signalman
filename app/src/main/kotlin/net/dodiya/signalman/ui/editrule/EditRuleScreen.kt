@@ -41,11 +41,12 @@ fun EditRuleScreen(
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val context = LocalContext.current
-    val tabs = listOf(
-        stringResource(R.string.tab_conditions),
-        stringResource(R.string.tab_transformation),
-        stringResource(R.string.tab_target_app)
-    )
+    val tabs =
+        listOf(
+            stringResource(R.string.tab_conditions),
+            stringResource(R.string.tab_transformation),
+            stringResource(R.string.tab_target_app),
+        )
 
     Scaffold(
         modifier = modifier,
@@ -57,7 +58,7 @@ fun EditRuleScreen(
                             uiState.name
                         } else {
                             context.getString(R.string.title_edit_rule)
-                        }
+                        },
                     )
                 },
                 navigationIcon = {

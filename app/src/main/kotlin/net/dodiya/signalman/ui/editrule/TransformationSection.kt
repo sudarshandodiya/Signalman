@@ -51,7 +51,7 @@ fun TransformationSection(
     replacePattern: String,
     replacement: String,
     exampleUrl: String,
-    previewTransformedUrl: String?,
+    @Suppress("UNUSED_PARAMETER") previewTransformedUrl: String?,
     urlComponentReplacements: List<UrlComponentReplacement>,
     transformMode: TransformMode,
     modifier: Modifier = Modifier,

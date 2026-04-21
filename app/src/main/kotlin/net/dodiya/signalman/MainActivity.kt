@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
+        private const val ROUTING_TIMEOUT_MS = 2000L
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +71,7 @@ class MainActivity : ComponentActivity() {
     private fun observeRoutingEvents() {
         lifecycleScope.launch {
             val event =
-                withTimeoutOrNull(2000L) {
+                withTimeoutOrNull(ROUTING_TIMEOUT_MS) {
                     routingViewModel.events.first()
                 }
             when (event) {

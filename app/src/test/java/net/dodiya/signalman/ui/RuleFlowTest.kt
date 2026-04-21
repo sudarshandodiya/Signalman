@@ -1,12 +1,9 @@
 package net.dodiya.signalman.ui
 
-import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.printToLog
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -15,29 +12,32 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import net.dodiya.signalman.data.AppInfoRepository
 import net.dodiya.signalman.data.PreferenceManager
 import net.dodiya.signalman.data.RuleRepository
 import net.dodiya.signalman.domain.MatchRuleUseCase
 import net.dodiya.signalman.domain.TransformUrlUseCase
+import net.dodiya.signalman.ui.rulelist.RuleListScreen
 import net.dodiya.signalman.ui.theme.SignalmanTheme
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.koin.core.context.stopKoin
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [33])
+@Config(sdk = [34])
 class RuleFlowTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    private val appInfoRepository = mockk<AppInfoRepository>(relaxed = true)
     private val repository = mockk<RuleRepository>(relaxed = true)
     private val preferenceManager = mockk<PreferenceManager>(relaxed = true)
-    private val application = mockk<Application>(relaxed = true)
     private val matchRuleUseCase = MatchRuleUseCase()
     private val transformUrlUseCase = TransformUrlUseCase()
 
@@ -55,7 +55,7 @@ class RuleFlowTest {
 
         viewModel =
             RuleViewModel(
-                application = application,
+                appInfoRepository = appInfoRepository,
                 repository = repository,
                 preferenceManager = preferenceManager,
                 matchRuleUseCase = matchRuleUseCase,
@@ -66,6 +66,7 @@ class RuleFlowTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        stopKoin()
     }
 
     @Test
@@ -84,6 +85,7 @@ class RuleFlowTest {
                         capturedUrl = url
                     },
                     onEditRule = {},
+                    onNavigateToSettings = {},
                 )
             }
         }
@@ -91,9 +93,6 @@ class RuleFlowTest {
         // Open Add Rule Dialog
         composeTestRule.onNodeWithTag("add_rule_fab").performClick()
         composeTestRule.waitForIdle()
-
-        // Debug: print tree
-        composeTestRule.onRoot().printToLog("RuleFlowTest")
 
         // Verify dialog is shown (should have rule_name_input)
         composeTestRule.onNodeWithTag("rule_name_input").assertExists()

@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# Git pre-commit hook for Signalman
+# Runs spotlessApply and detekt before allowing commits
+
+set -e
+
+echo "Running pre-commit checks..."
+echo ""
+
+# Check if gradlew exists
+if [ ! -f "./gradlew" ]; then
+    echo "Error: gradlew not found. Are you in the project root?"
+    exit 1
+fi
+
+# Run Spotless Apply
+echo "================================"
+echo "Running Spotless Apply..."
+echo "================================"
+./gradlew spotlessApply --no-daemon --quiet
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "Error: Spotless Apply failed. Please fix the formatting issues."
+    exit 1
+fi
+
+echo "Spotless Apply completed successfully."
+echo ""
+
+# Run Detekt
+echo "================================"
+echo "Running Detekt..."
+echo "================================"
+./gradlew detekt --no-daemon
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "Error: Detekt failed. Please fix the code quality issues."
+    echo "Check build/reports/detekt/detekt.html for details."
+    exit 1
+fi
+
+echo ""
+echo "================================"
+echo "All pre-commit checks passed!"
+echo "================================"
+echo ""
+
+exit 0

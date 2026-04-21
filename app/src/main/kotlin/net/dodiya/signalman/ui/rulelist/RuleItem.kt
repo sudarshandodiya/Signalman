@@ -57,7 +57,7 @@ fun RuleItem(
                 )
                 Text(
                     text = "→ ${rule.targetPackage ?: context.getString(R.string.system_chooser)}",
-                    style = MaterialTheme.typography.labelSmall
+                    style = MaterialTheme.typography.labelSmall,
                 )
             }
             Row {

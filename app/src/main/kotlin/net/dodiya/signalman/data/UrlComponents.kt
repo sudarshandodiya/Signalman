@@ -51,7 +51,11 @@ data class UrlComponents(
                     } else {
                         Pair("", fullHost)
                     }
-                } catch (e: Exception) {
+                } catch (e: IllegalArgumentException) {
+                    android.util.Log.w("UrlComponents", "Failed to parse domain: $fullHost", e)
+                    Pair(fullHost, "")
+                } catch (e: IllegalStateException) {
+                    android.util.Log.w("UrlComponents", "Domain has no parent: $fullHost", e)
                     Pair(fullHost, "")
                 }
 
@@ -71,7 +75,11 @@ data class UrlComponents(
             try {
                 val javaUri = URI(urlString)
                 fromUri(Uri.parse(javaUri.toString()))
-            } catch (e: Exception) {
+            } catch (e: java.net.URISyntaxException) {
+                android.util.Log.w("UrlComponents", "Invalid URL syntax: $urlString", e)
+                null
+            } catch (e: IllegalArgumentException) {
+                android.util.Log.w("UrlComponents", "Invalid URL argument: $urlString", e)
                 null
             }
     }

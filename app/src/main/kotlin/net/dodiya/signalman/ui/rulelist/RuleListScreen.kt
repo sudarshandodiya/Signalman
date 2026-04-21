@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.dodiya.signalman.R
@@ -95,7 +96,7 @@ fun RuleListScreen(
             if (selectedTab == 0) {
                 FloatingActionButton(
                     onClick = { showAddRuleDialog = true },
-                    modifier = Modifier.padding(bottom = 16.dp),
+                    modifier = Modifier.padding(bottom = 16.dp).testTag("add_rule_fab"),
                 ) {
                     Icon(Icons.Default.Add, contentDescription = context.getString(R.string.cd_add_rule))
                 }
@@ -121,7 +122,7 @@ fun RuleListScreen(
                             context.getString(R.string.no_custom_rules)
                         } else {
                             context.getString(R.string.no_auto_rules)
-                        }
+                        },
                     )
                 }
             } else {
