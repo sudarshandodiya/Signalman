@@ -43,7 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,10 +64,10 @@ fun RuleListScreen(
     onEditRule: (Int) -> Unit,
     onNavigateToSettings: () -> Unit = {},
 ) {
-    val rules by viewModel.allRules.collectAsState()
-    val installedApps by viewModel.installedApps.collectAsState()
-    val globalDefault by viewModel.globalDefaultPackage.collectAsState()
-    val isAutoEnabled by viewModel.isAutoRuleGenerationEnabled.collectAsState()
+    val rules by viewModel.allRules.collectAsStateWithLifecycle()
+    val installedApps by viewModel.installedApps.collectAsStateWithLifecycle()
+    val globalDefault by viewModel.globalDefaultPackage.collectAsStateWithLifecycle()
+    val isAutoEnabled by viewModel.isAutoRuleGenerationEnabled.collectAsStateWithLifecycle()
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var showAddRuleDialog by remember { mutableStateOf(false) }

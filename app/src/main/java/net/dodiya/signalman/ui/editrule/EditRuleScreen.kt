@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.data.AppInfo
 import net.dodiya.signalman.ui.editrule.EditRuleEvent
 import net.dodiya.signalman.ui.editrule.EditRuleUiState
 
@@ -28,6 +29,7 @@ import net.dodiya.signalman.ui.editrule.EditRuleUiState
 @Composable
 fun EditRuleScreen(
     uiState: EditRuleUiState,
+    installedApps: List<AppInfo>,
     onEvent: (EditRuleEvent) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -115,7 +117,7 @@ fun EditRuleScreen(
                             TargetAppSection(
                                 targetPackage = uiState.targetPackage,
                                 onEvent = onEvent,
-                                installedApps = uiState.installedApps,
+                                installedApps = installedApps,
                             )
                     }
                 }

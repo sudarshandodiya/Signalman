@@ -1,17 +1,14 @@
 package net.dodiya.signalman.ui
 
-import android.app.Application
-import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import net.dodiya.signalman.data.AppInfo
+import net.dodiya.signalman.data.AppInfoRepository
 import net.dodiya.signalman.data.PreferenceManager
 import net.dodiya.signalman.data.Rule
 import net.dodiya.signalman.data.RuleRepository
@@ -19,7 +16,7 @@ import net.dodiya.signalman.domain.MatchRuleUseCase
 import net.dodiya.signalman.domain.TransformUrlUseCase
 
 class RuleViewModel(
-    private val application: Application,
+    private val appInfoRepository: AppInfoRepository,
     private val repository: RuleRepository,
     private val preferenceManager: PreferenceManager,
     val matchRuleUseCase: MatchRuleUseCase,
@@ -31,8 +28,7 @@ class RuleViewModel(
         private const val SUBSCRIBE_TIMEOUT_MS = 5000L
     }
 
-    private val _installedApps = MutableStateFlow<List<AppInfo>>(emptyList())
-    val installedApps: StateFlow<List<AppInfo>> = _installedApps.asStateFlow()
+    val installedApps = appInfoRepository.installedApps
 
     val globalDefaultPackage: StateFlow<String?> =
         preferenceManager.globalDefaultPackage
@@ -57,28 +53,8 @@ class RuleViewModel(
                 started = SharingStarted.WhileSubscribed(SUBSCRIBE_TIMEOUT_MS),
                 initialValue = emptyList(),
             )
-        loadInstalledApps()
-    }
-
-    private fun loadInstalledApps() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val pm = application.packageManager
-            val mainIntent = Intent(Intent.ACTION_MAIN, null)
-            mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
-            val resolveInfos = pm.queryIntentActivities(mainIntent, 0)
-
-            val apps =
-                resolveInfos
-                    .map {
-                        AppInfo(
-                            name = it.loadLabel(pm).toString(),
-                            packageName = it.activityInfo.packageName,
-                            icon = it.loadIcon(pm),
-                        )
-                    }.distinctBy { it.packageName }
-                    .sortedBy { it.name }
-
-            _installedApps.value = apps
+        viewModelScope.launch {
+            appInfoRepository.loadInstalledApps()
         }
     }
 

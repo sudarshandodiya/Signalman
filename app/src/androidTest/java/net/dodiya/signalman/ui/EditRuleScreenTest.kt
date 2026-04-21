@@ -28,6 +28,7 @@ class EditRuleScreenTest {
         composeTestRule.setContent {
             EditRuleScreen(
                 uiState = initialState,
+                installedApps = emptyList(),
                 onEvent = {},
                 onNavigateBack = {},
             )
@@ -46,6 +47,7 @@ class EditRuleScreenTest {
         composeTestRule.setContent {
             EditRuleScreen(
                 uiState = initialState,
+                installedApps = emptyList(),
                 onEvent = { lastEvent = it },
                 onNavigateBack = {},
             )
@@ -69,6 +71,7 @@ class EditRuleScreenTest {
         composeTestRule.setContent {
             EditRuleScreen(
                 uiState = initialState,
+                installedApps = emptyList(),
                 onEvent = {},
                 onNavigateBack = {},
             )
@@ -88,6 +91,7 @@ class EditRuleScreenTest {
         composeTestRule.setContent {
             EditRuleScreen(
                 uiState = initialState,
+                installedApps = emptyList(),
                 onEvent = {},
                 onNavigateBack = {},
             )
@@ -109,6 +113,7 @@ class EditRuleScreenTest {
         composeTestRule.setContent {
             EditRuleScreen(
                 uiState = initialState,
+                installedApps = emptyList(),
                 onEvent = {
                     if (it is EditRuleEvent.SaveRule) saved = true
                 },
