@@ -134,7 +134,7 @@ class EditRuleViewModel(
         updatePreview()
     }
 
-    private fun handleTargetPackageChanged(packageName: String) {
+    private fun handleTargetPackageChanged(packageName: String?) {
         stateManager.updateBasicFields(targetPackage = packageName)
     }
 
@@ -178,7 +178,7 @@ class EditRuleViewModel(
         updatePreview()
     }
 
-    private fun handleUrlComponentReplacementChanged(replacement: List<net.dodiya.signalman.data.UrlComponentReplacement>) {
+    private fun handleUrlComponentReplacementChanged(replacement: net.dodiya.signalman.data.UrlComponentReplacement) {
         stateManager.updateUrlComponentReplacement(replacement)
         updatePreview()
     }
