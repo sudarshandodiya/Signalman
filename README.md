@@ -19,16 +19,16 @@ Signalman is an advanced URL router for Android that acts as a default handler f
 
 ## Screenshots
 
-<div align="center">
+<div>
   <table>
     <tr>
-      <td align="center"><img src="screenshots/rules_list.png" width="200" alt="Rules List"/><br/><b>Rules List</b></td>
-      <td align="center"><img src="screenshots/edit_rule.png" width="200" alt="Edit Rule"/><br/><b>Edit Rule</b></td>
-      <td align="center"><img src="screenshots/auto_rules.png" width="200" alt="Auto Rules"/><br/><b>Auto Rules</b></td>
+      <td><img src="screenshots/rules_list.png" alt="Rules List"/><br/><b>Rules List</b></td>
+      <td><img src="screenshots/edit_rule.png" alt="Edit Rule"/><br/><b>Edit Rule</b></td>
+      <td><img src="screenshots/auto_rules.png" alt="Auto Rules"/><br/><b>Auto Rules</b></td>
     </tr>
     <tr>
-      <td align="center"><img src="screenshots/overlay_chooser.png" width="200" alt="Overlay Chooser"/><br/><b>Overlay Chooser</b></td>
-      <td align="center"><img src="screenshots/settings.png" width="200" alt="Settings"/><br/><b>Settings</b></td>
+      <td><img src="screenshots/overlay_chooser.png" alt="Overlay Chooser"/><br/><b>Overlay Chooser</b></td>
+      <td><img src="screenshots/settings.png" alt="Settings"/><br/><b>Settings</b></td>
     </tr>
   </table>
 </div>
@@ -89,22 +89,6 @@ Signalman is built with modern Android architecture:
 - **Local Storage**: Room Database with DataStore for preferences
 - **Async Operations**: Kotlin Coroutines
 
-## Project Structure
-
-```
-app/src/main/kotlin/net/dodiya/signalman/
-├── data/                    # Data layer (models, database, repository)
-├── di/                      # Dependency injection modules
-├── ui/                      # UI layer (screens, components, ViewModels)
-│   ├── components/          # Reusable UI components
-│   ├── editrule/            # Rule editing screens
-│   ├── importexport/        # Import/Export functionality
-│   ├── overlay/             # URL chooser overlay
-│   ├── rulelist/            # Rule list screen
-│   └── settings/            # Settings components
-└── MainActivity.kt          # Main entry point
-```
-
 ## Building from Source
 
 ### Prerequisites
@@ -161,30 +145,10 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## Privacy
-
-Signalman respects your privacy:
-
-- All data is stored locally on your device
-- No internet connection required
-- No analytics or tracking
-- No ads
-
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-
-- [Jetpack Compose](https://developer.android.com/jetpack/compose) - Modern Android UI toolkit
-- [Material Design 3](https://m3.material.io/) - Design system
-- [Koin](https://insert-koin.io/) - Dependency injection framework
-- [Room](https://developer.android.com/training/data-storage/room) - Local database
-
 ## Support
 
 If you encounter any issues or have questions, please [open an issue](https://github.com/sudarshandodiya/Signalman/issues).
-
----
-
-**Note**: Signalman is not affiliated with or endorsed by any of the apps or services it can route to.
