@@ -56,16 +56,32 @@ jobs:
           name: release-apk-${{ github.event.inputs.version }}
           path: release-apk
 
-      - name: Create Release
+      - name: Create Draft Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.event.inputs.version }}
           name: Release v${{ github.event.inputs.version }}
           body: ${{ github.event.inputs.release_notes }}
           files: release-apk/*.apk
-          draft: false
+          draft: true
           prerelease: false
           generate_release_notes: false
-          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print Instructions
+        run: |
+          echo "✅ Draft release created successfully!"
+          echo ""
+          echo "⚠️  Repository rules block automated tag creation. Please complete the release manually:"
+          echo ""
+          echo "1. Create the tag locally:"
+          echo "   git fetch origin"
+          echo "   git tag v${{ github.event.inputs.version }} ${{ github.sha }}"
+          echo "   git push origin v${{ github.event.inputs.version }}"
+          echo ""
+          echo "2. Publish the release:"
+          echo "   https://github.com/${{ github.repository }}/releases"
+          echo ""
+          echo "If tag push fails due to repository rules, an admin must update the ruleset:"
+          echo "https://github.com/${{ github.repository }}/settings/rules"
