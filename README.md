@@ -22,13 +22,13 @@ Signalman is an advanced URL router for Android that acts as a default handler f
 <div>
   <table>
     <tr>
-      <td><img src="screenshots/rules_list.png" alt="Rules List"/><br/><b>Rules List</b></td>
-      <td><img src="screenshots/edit_rule.png" alt="Edit Rule"/><br/><b>Edit Rule</b></td>
-      <td><img src="screenshots/auto_rules.png" alt="Auto Rules"/><br/><b>Auto Rules</b></td>
+      <td><img src="screenshots/create_rule.png" alt="Create Rule"/></td>
+      <td><img src="screenshots/rule_conditions.png" alt="Rule Conditions"/></td>
+      <td><img src="screenshots/rule_transformation.png" alt="Rule Transformation"/></td>
     </tr>
     <tr>
-      <td><img src="screenshots/overlay_chooser.png" alt="Overlay Chooser"/><br/><b>Overlay Chooser</b></td>
-      <td><img src="screenshots/settings.png" alt="Settings"/><br/><b>Settings</b></td>
+      <td><img src="screenshots/app_chooser.png" alt="App Chooser"/></td>
+      <td><img src="screenshots/rule_overlay.png" alt="Rule Overlay"/></td>
     </tr>
   </table>
 </div>
