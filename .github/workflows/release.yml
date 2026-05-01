@@ -49,6 +49,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download Release APK
         uses: actions/download-artifact@v4
@@ -56,9 +58,26 @@ jobs:
           name: release-apk-${{ github.event.inputs.version }}
           path: release-apk
 
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse v${{ github.event.inputs.version }} >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fail if tag does not exist
+        if: steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          echo "::error::Tag v${{ github.event.inputs.version }} does not exist. Please create and push the tag before running this workflow:"
+          echo "  git tag v${{ github.event.inputs.version }}"
+          echo "  git push origin v${{ github.event.inputs.version }}"
+          exit 1
+
       - name: Delete existing release if present
         run: |
-          gh release delete v${{ github.event.inputs.version }} --yes --cleanup-tag || true
+          gh release delete v${{ github.event.inputs.version }} --yes || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
