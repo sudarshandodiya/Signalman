@@ -17,6 +17,7 @@ data class EditRuleUiState(
     val urlComponentReplacements: List<UrlComponentReplacement> = emptyList(),
     val transformMode: TransformMode = TransformMode.Simple(),
     val exampleUrl: String = "",
+    val isExampleUrlValid: Boolean = true,
     val isPreviewMatch: Boolean = false,
     val previewTransformedUrl: String? = null,
     val isSaveEnabled: Boolean = false,

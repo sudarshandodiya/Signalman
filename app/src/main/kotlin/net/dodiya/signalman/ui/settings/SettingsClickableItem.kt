@@ -26,13 +26,14 @@ fun SettingsClickableItem(
     subtitle: String,
     icon: ImageVector,
     onClick: () -> Unit,
+    isLastItem: Boolean = false,
 ) {
     Column(modifier = Modifier.clickable(onClick = onClick)) {
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -45,7 +46,7 @@ fun SettingsClickableItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
@@ -60,10 +61,12 @@ fun SettingsClickableItem(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             )
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.outlineVariant,
-        )
+        if (!isLastItem) {
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 56.dp, end = 16.dp),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            )
+        }
     }
 }

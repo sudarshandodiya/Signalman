@@ -25,3 +25,14 @@ Signalman is an Android application designed to act as the default handler for a
 - **Tasks**:
     - Research how to register as a default browser/URL handler.
     - Document the rule syntax and usage.
+
+## CI / Pre-Push Checklist
+
+Before pushing changes, run the following commands locally to ensure CI (`.github/workflows/pr-checks.yml`) passes:
+
+```bash
+./gradlew spotlessCheck --no-daemon   # Code formatting
+./gradlew detekt --no-daemon          # Static analysis
+./gradlew assembleDebug --no-daemon   # Build debug APK
+./gradlew testDebugUnitTest --no-daemon  # Unit tests
+```

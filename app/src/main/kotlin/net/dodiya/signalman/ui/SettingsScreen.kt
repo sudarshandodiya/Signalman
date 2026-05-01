@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.dodiya.signalman.R
 import net.dodiya.signalman.ui.settings.SettingsClickableItem
-import net.dodiya.signalman.ui.settings.SettingsHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,38 +128,34 @@ fun SettingsScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
         ) {
-            item {
-                SettingsHeader(context.getString(R.string.section_general))
-            }
-
-            item {
-                SettingsClickableItem(
-                    title = context.getString(R.string.export_rules_title),
-                    subtitle = context.getString(R.string.export_rules_subtitle),
-                    icon = Icons.Default.FileUpload,
-                    onClick = { exportLauncher.launch("signalman_rules.json") },
+            val settingsItems =
+                listOf(
+                    Triple(
+                        context.getString(R.string.export_rules_title),
+                        context.getString(R.string.export_rules_subtitle),
+                        Icons.Default.FileUpload,
+                    ) to { exportLauncher.launch("signalman_rules.json") },
+                    Triple(
+                        context.getString(R.string.import_rules_title),
+                        context.getString(R.string.import_rules_subtitle),
+                        Icons.Default.FileDownload,
+                    ) to { importLauncher.launch(arrayOf("application/json")) },
+                    Triple(
+                        context.getString(R.string.browser_visibility_title),
+                        context.getString(R.string.browser_visibility_subtitle),
+                        Icons.Default.Language,
+                    ) to { showBrowserDialog = true },
                 )
-            }
 
-            item {
+            items(settingsItems.size) { index ->
+                val (triple, onClick) = settingsItems[index]
+                val (title, subtitle, icon) = triple
                 SettingsClickableItem(
-                    title = context.getString(R.string.import_rules_title),
-                    subtitle = context.getString(R.string.import_rules_subtitle),
-                    icon = Icons.Default.FileDownload,
-                    onClick = { importLauncher.launch(arrayOf("application/json")) },
-                )
-            }
-
-            item {
-                SettingsHeader(context.getString(R.string.section_browsers))
-            }
-
-            item {
-                SettingsClickableItem(
-                    title = context.getString(R.string.browser_visibility_title),
-                    subtitle = context.getString(R.string.browser_visibility_subtitle),
-                    icon = Icons.Default.Language,
-                    onClick = { showBrowserDialog = true },
+                    title = title,
+                    subtitle = subtitle,
+                    icon = icon,
+                    onClick = onClick,
+                    isLastItem = index == settingsItems.size - 1,
                 )
             }
 
@@ -174,10 +168,6 @@ fun SettingsScreen(
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
                 }
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

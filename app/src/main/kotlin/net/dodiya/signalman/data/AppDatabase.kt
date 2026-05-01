@@ -15,7 +15,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase =
             Room
                 .databaseBuilder(context, AppDatabase::class.java, "signalman_database")
-                .fallbackToDestructiveMigration(false)
+                .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
     }
 }

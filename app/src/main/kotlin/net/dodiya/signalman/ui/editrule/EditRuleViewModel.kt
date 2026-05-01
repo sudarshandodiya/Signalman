@@ -1,5 +1,6 @@
 package net.dodiya.signalman.ui.editrule
 
+import android.util.Patterns
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -20,6 +21,7 @@ import net.dodiya.signalman.data.TransformMode
 import net.dodiya.signalman.domain.MatchRuleUseCase
 import net.dodiya.signalman.domain.TransformUrlUseCase
 
+@Suppress("TooManyFunctions")
 class EditRuleViewModel(
     private val repository: RuleRepository,
     private val matchRuleUseCase: MatchRuleUseCase,
@@ -99,62 +101,96 @@ class EditRuleViewModel(
 
     fun onEvent(event: EditRuleEvent) {
         when (event) {
-            is EditRuleEvent.NameChanged -> {
-                stateManager.updateBasicFields(name = event.name)
-            }
-            is EditRuleEvent.ExampleUrlChanged -> {
-                stateManager.updateBasicFields(exampleUrl = event.url)
-                updatePreview()
-            }
-            is EditRuleEvent.TargetPackageChanged -> {
-                stateManager.updateBasicFields(targetPackage = event.packageName)
-            }
-            is EditRuleEvent.FilterChanged -> {
-                stateManager.updateFilter(event.index, event.filter)
-                updatePreview()
-            }
-            is EditRuleEvent.FilterAdded -> {
-                stateManager.addFilter(event.filter)
-                updatePreview()
-            }
-            is EditRuleEvent.FilterRemoved -> {
-                stateManager.removeFilter(event.index)
-                updatePreview()
-            }
-            is EditRuleEvent.LogicalOperatorChanged -> {
-                stateManager.updateLogicalOperator(event.operator)
-                updatePreview()
-            }
-            is EditRuleEvent.TransformEnabledChanged -> {
-                stateManager.updateTransformConfig(enabled = event.enabled)
-                updatePreview()
-            }
-            is EditRuleEvent.ReplacePatternChanged -> {
-                val currentState = _uiState.value
-                stateManager.updateTransformPattern(event.pattern, currentState.replacement)
-                updatePreview()
-            }
-            is EditRuleEvent.ReplacementChanged -> {
-                val currentState = _uiState.value
-                stateManager.updateTransformPattern(currentState.replacePattern, event.replacement)
-                updatePreview()
-            }
-            is EditRuleEvent.UrlComponentReplacementChanged -> {
-                stateManager.updateUrlComponentReplacement(event.replacement)
-                updatePreview()
-            }
-            is EditRuleEvent.TransformModeChanged -> {
-                stateManager.updateTransformConfig(mode = event.mode)
-                updatePreview()
-            }
+            is EditRuleEvent.NameChanged -> handleNameChanged(event.name)
+            is EditRuleEvent.ExampleUrlChanged -> handleExampleUrlChanged(event.url)
+            is EditRuleEvent.TargetPackageChanged -> handleTargetPackageChanged(event.packageName)
+            is EditRuleEvent.FilterChanged -> handleFilterChanged(event.index, event.filter)
+            is EditRuleEvent.FilterAdded -> handleFilterAdded(event.filter)
+            is EditRuleEvent.FilterRemoved -> handleFilterRemoved(event.index)
+            is EditRuleEvent.LogicalOperatorChanged -> handleLogicalOperatorChanged(event.operator)
+            is EditRuleEvent.TransformEnabledChanged -> handleTransformEnabledChanged(event.enabled)
+            is EditRuleEvent.ReplacePatternChanged -> handleReplacePatternChanged(event.pattern)
+            is EditRuleEvent.ReplacementChanged -> handleReplacementChanged(event.replacement)
+            is EditRuleEvent.UrlComponentReplacementChanged -> handleUrlComponentReplacementChanged(event.replacement)
+            is EditRuleEvent.TransformModeChanged -> handleTransformModeChanged(event.mode)
             EditRuleEvent.SaveRule -> saveRule()
         }
         stateManager.validateAndSetSaveEnabled()
     }
 
+    private fun handleNameChanged(name: String) {
+        stateManager.updateBasicFields(name = name)
+    }
+
+    private fun handleExampleUrlChanged(url: String) {
+        val processedUrl =
+            if (url.isNotBlank() && !url.contains("://")) {
+                "https://$url"
+            } else {
+                url
+            }
+        val isValid = processedUrl.isBlank() || Patterns.WEB_URL.matcher(processedUrl).matches()
+        _uiState.update { it.copy(exampleUrl = processedUrl, isExampleUrlValid = isValid) }
+        updatePreview()
+    }
+
+    private fun handleTargetPackageChanged(packageName: String?) {
+        stateManager.updateBasicFields(targetPackage = packageName)
+    }
+
+    private fun handleFilterChanged(
+        index: Int,
+        filter: Filter,
+    ) {
+        stateManager.updateFilter(index, filter)
+        updatePreview()
+    }
+
+    private fun handleFilterAdded(filter: Filter) {
+        stateManager.addFilter(filter)
+        updatePreview()
+    }
+
+    private fun handleFilterRemoved(index: Int) {
+        stateManager.removeFilter(index)
+        updatePreview()
+    }
+
+    private fun handleLogicalOperatorChanged(operator: net.dodiya.signalman.data.LogicalOperator) {
+        stateManager.updateLogicalOperator(operator)
+        updatePreview()
+    }
+
+    private fun handleTransformEnabledChanged(enabled: Boolean) {
+        stateManager.updateTransformConfig(enabled = enabled)
+        updatePreview()
+    }
+
+    private fun handleReplacePatternChanged(pattern: String) {
+        val currentState = _uiState.value
+        stateManager.updateTransformPattern(pattern, currentState.replacement)
+        updatePreview()
+    }
+
+    private fun handleReplacementChanged(replacement: String) {
+        val currentState = _uiState.value
+        stateManager.updateTransformPattern(currentState.replacePattern, replacement)
+        updatePreview()
+    }
+
+    private fun handleUrlComponentReplacementChanged(replacement: net.dodiya.signalman.data.UrlComponentReplacement) {
+        stateManager.updateUrlComponentReplacement(replacement)
+        updatePreview()
+    }
+
+    private fun handleTransformModeChanged(mode: TransformMode) {
+        stateManager.updateTransformConfig(mode = mode)
+        updatePreview()
+    }
+
     private fun updatePreview() {
         val state = _uiState.value
-        if (state.exampleUrl.isBlank()) {
+        if (state.exampleUrl.isBlank() || !state.isExampleUrlValid) {
             _uiState.update { it.copy(isPreviewMatch = false, previewTransformedUrl = null, individualFilterMatches = emptyList()) }
             return
         }
