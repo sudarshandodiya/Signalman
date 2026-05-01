@@ -49,6 +49,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Download Release APK
         uses: actions/download-artifact@v4
@@ -56,32 +59,34 @@ jobs:
           name: release-apk-${{ github.event.inputs.version }}
           path: release-apk
 
-      - name: Create Draft Release
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create and Push Tag
+        id: create_tag
+        run: |
+          TAG_NAME="v${{ github.event.inputs.version }}"
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists"
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            git tag "$TAG_NAME"
+            git push origin "$TAG_NAME"
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Created and pushed tag $TAG_NAME"
+          fi
+
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.event.inputs.version }}
           name: Release v${{ github.event.inputs.version }}
           body: ${{ github.event.inputs.release_notes }}
           files: release-apk/*.apk
-          draft: true
+          draft: false
           prerelease: false
-          generate_release_notes: false
+          generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Print Instructions
-        run: |
-          echo "✅ Draft release created successfully!"
-          echo ""
-          echo "⚠️  Repository rules block automated tag creation. Please complete the release manually:"
-          echo ""
-          echo "1. Create the tag locally:"
-          echo "   git fetch origin"
-          echo "   git tag v${{ github.event.inputs.version }} ${{ github.sha }}"
-          echo "   git push origin v${{ github.event.inputs.version }}"
-          echo ""
-          echo "2. Publish the release:"
-          echo "   https://github.com/${{ github.repository }}/releases"
-          echo ""
-          echo "If tag push fails due to repository rules, an admin must update the ruleset:"
-          echo "https://github.com/${{ github.repository }}/settings/rules"
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
