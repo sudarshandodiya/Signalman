@@ -13,5 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+*.keystore
+*.jks
 /.kotlin/
 .agents/skills/
