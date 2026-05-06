@@ -28,7 +28,6 @@ import net.dodiya.signalman.ui.OverlayChooser
 import net.dodiya.signalman.ui.RoutingEvent
 import net.dodiya.signalman.ui.RoutingViewModel
 import net.dodiya.signalman.ui.RuleViewModel
-import net.dodiya.signalman.ui.SettingsScreen
 import net.dodiya.signalman.ui.SettingsViewModel
 import net.dodiya.signalman.ui.editrule.EditRuleScreen
 import net.dodiya.signalman.ui.editrule.EditRuleViewModel
@@ -171,6 +170,7 @@ class MainActivity : ComponentActivity() {
             composable("ruleList") {
                 RuleListScreen(
                     viewModel = viewModel,
+                    settingsViewModel = settingsViewModel,
                     onAddRule = { name, exampleUrl ->
                         val encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString())
                         val encodedUrl =
@@ -191,14 +191,7 @@ class MainActivity : ComponentActivity() {
                         navController.navigate(route)
                     },
                     onEditRule = { ruleId -> navController.navigate("editRule/$ruleId") },
-                    onNavigateToSettings = { navController.navigate("settings") },
-                )
-            }
-            composable("settings") {
-                SettingsScreen(
-                    onNavigateBack = { navController.popBackStack() },
                     onNavigateToImportExport = { navController.navigate("importExport") },
-                    viewModel = settingsViewModel,
                 )
             }
             composable("importExport") {

@@ -18,9 +18,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -33,15 +36,19 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.dodiya.signalman.R
+import net.dodiya.signalman.ui.ImportExportState
 import net.dodiya.signalman.ui.RuleViewModel
+import net.dodiya.signalman.ui.SettingsContent
+import net.dodiya.signalman.ui.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RuleListScreen(
     viewModel: RuleViewModel,
+    settingsViewModel: SettingsViewModel,
     onAddRule: (String, String) -> Unit,
     onEditRule: (Int) -> Unit,
-    onNavigateToSettings: () -> Unit = {},
+    onNavigateToImportExport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val rules by viewModel.allRules.collectAsStateWithLifecycle()
@@ -62,14 +69,39 @@ fun RuleListScreen(
         }
 
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val importExportState by settingsViewModel.importExportState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(importExportState) {
+        when (val state = importExportState) {
+            is ImportExportState.Success -> {
+                snackbarHostState.showSnackbar(state.message)
+                settingsViewModel.resetImportExportState()
+            }
+            is ImportExportState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+                settingsViewModel.resetImportExportState()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(context.getString(R.string.title_signalman)) },
+                title = {
+                    Text(
+                        when (selectedTab) {
+                            0 -> context.getString(R.string.nav_custom)
+                            1 -> context.getString(R.string.nav_auto)
+                            else -> context.getString(R.string.nav_settings)
+                        },
+                    )
+                },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
@@ -85,8 +117,8 @@ fun RuleListScreen(
                     label = { Text(context.getString(R.string.nav_auto)) },
                 )
                 NavigationBarItem(
-                    selected = false,
-                    onClick = onNavigateToSettings,
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                     label = { Text(context.getString(R.string.nav_settings)) },
                 )
@@ -104,36 +136,46 @@ fun RuleListScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            if (selectedTab == 1) {
-                AutoRulesHeader(
-                    isAutoEnabled = isAutoEnabled,
-                    onAutoEnabledChange = { viewModel.setAutoRuleGenerationEnabled(it) },
-                    globalDefault = globalDefault,
-                    installedApps = installedApps,
-                    onSelectDefault = { viewModel.setGlobalDefault(it) },
-                )
-                HorizontalDivider()
-            }
-
-            if (filteredRules.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        if (selectedTab == 0) {
-                            context.getString(R.string.no_custom_rules)
-                        } else {
-                            context.getString(R.string.no_auto_rules)
-                        },
-                    )
-                }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(filteredRules) { rule ->
-                        RuleItem(
-                            rule = rule,
-                            onDelete = { viewModel.delete(rule) },
-                            onEdit = { onEditRule(rule.id) },
+            when (selectedTab) {
+                0, 1 -> {
+                    if (selectedTab == 1) {
+                        AutoRulesHeader(
+                            isAutoEnabled = isAutoEnabled,
+                            onAutoEnabledChange = { viewModel.setAutoRuleGenerationEnabled(it) },
+                            globalDefault = globalDefault,
+                            installedApps = installedApps,
+                            onSelectDefault = { viewModel.setGlobalDefault(it) },
                         )
+                        HorizontalDivider()
                     }
+
+                    if (filteredRules.isEmpty()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                if (selectedTab == 0) {
+                                    context.getString(R.string.no_custom_rules)
+                                } else {
+                                    context.getString(R.string.no_auto_rules)
+                                },
+                            )
+                        }
+                    } else {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(filteredRules) { rule ->
+                                RuleItem(
+                                    rule = rule,
+                                    onDelete = { viewModel.delete(rule) },
+                                    onEdit = { onEditRule(rule.id) },
+                                )
+                            }
+                        }
+                    }
+                }
+                2 -> {
+                    SettingsContent(
+                        onNavigateToImportExport = onNavigateToImportExport,
+                        viewModel = settingsViewModel,
+                    )
                 }
             }
         }
