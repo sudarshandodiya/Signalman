@@ -48,8 +48,12 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (intent?.action != Intent.ACTION_VIEW) {
+            setTheme(R.style.Theme_Signalman)
+        }
         super.onCreate(savedInstanceState)
-        observeRoutingEvents()
+        val isRoutingIntent = intent?.action == Intent.ACTION_VIEW
+        observeRoutingEvents(hasTimeout = isRoutingIntent)
         handleIntent(intent)
     }
 
@@ -66,26 +70,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun observeRoutingEvents() {
+    private fun observeRoutingEvents(hasTimeout: Boolean) {
         lifecycleScope.launch {
-            val timeoutJob =
-                launch {
-                    delay(ROUTING_TIMEOUT_MS)
-                    showUi()
-                }
+            if (hasTimeout) {
+                val timeoutJob =
+                    launch {
+                        delay(ROUTING_TIMEOUT_MS)
+                        showUi()
+                    }
 
-            routingViewModel.events.collect { event ->
-                timeoutJob.cancel()
-                when (event) {
-                    is RoutingEvent.RouteToApp -> {
-                        routeUrl(event.uri, event.targetPackage)
-                        finish()
+                routingViewModel.events.collect { event ->
+                    timeoutJob.cancel()
+                    when (event) {
+                        is RoutingEvent.RouteToApp -> {
+                            routeUrl(event.uri, event.targetPackage)
+                            finish()
+                        }
+                        is RoutingEvent.ShowOverlay -> {
+                            showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
+                        }
+                        RoutingEvent.Finish -> finish()
                     }
-                    is RoutingEvent.ShowOverlay -> {
-                        showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
-                    }
-                    RoutingEvent.Finish -> finish()
                 }
+            } else {
+                showUi()
             }
         }
     }
