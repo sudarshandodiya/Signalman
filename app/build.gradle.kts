@@ -17,18 +17,22 @@ android {
         file.inputStream().use { stream -> localProps.load(stream) }
     }
 
-    val propFile = localProps.getProperty("RELEASE_STORE_FILE")
-        ?: System.getenv("SIGNING_KEYSTORE_PATH")
+    val propFile =
+        localProps.getProperty("RELEASE_STORE_FILE")
+            ?: System.getenv("SIGNING_KEYSTORE_PATH")
     val keystoreFile = propFile?.let { rootProject.file(it) }
 
     signingConfigs {
         if (keystoreFile?.exists() == true) {
-            val ksPassword = localProps.getProperty("RELEASE_STORE_PASSWORD")
-                ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
-            val ksAlias = localProps.getProperty("RELEASE_KEY_ALIAS")
-                ?: System.getenv("KEY_ALIAS") ?: ""
-            val keyPass = localProps.getProperty("RELEASE_KEY_PASSWORD")
-                ?: System.getenv("KEY_PASSWORD") ?: ""
+            val ksPassword =
+                localProps.getProperty("RELEASE_STORE_PASSWORD")
+                    ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
+            val ksAlias =
+                localProps.getProperty("RELEASE_KEY_ALIAS")
+                    ?: System.getenv("KEY_ALIAS") ?: ""
+            val keyPass =
+                localProps.getProperty("RELEASE_KEY_PASSWORD")
+                    ?: System.getenv("KEY_PASSWORD") ?: ""
             create("release") {
                 storeFile = keystoreFile
                 storePassword = ksPassword
@@ -73,11 +77,6 @@ android {
 
     buildFeatures {
         compose = true
-    }
-    testOptions {
-        unitTests {
-            isIncludeAndroidResources = true
-        }
     }
     packaging {
         resources {
