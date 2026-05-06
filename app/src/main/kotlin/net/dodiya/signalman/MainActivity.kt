@@ -21,9 +21,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import net.dodiya.signalman.ui.ImportExportScreen
 import net.dodiya.signalman.ui.OverlayChooser
 import net.dodiya.signalman.ui.RoutingEvent
@@ -70,20 +69,24 @@ class MainActivity : ComponentActivity() {
 
     private fun observeRoutingEvents() {
         lifecycleScope.launch {
-            val event =
-                withTimeoutOrNull(ROUTING_TIMEOUT_MS) {
-                    routingViewModel.events.first()
+            val timeoutJob =
+                launch {
+                    delay(ROUTING_TIMEOUT_MS)
+                    showUi()
                 }
-            when (event) {
-                is RoutingEvent.RouteToApp -> {
-                    routeUrl(event.uri, event.targetPackage)
-                    finish()
+
+            routingViewModel.events.collect { event ->
+                timeoutJob.cancel()
+                when (event) {
+                    is RoutingEvent.RouteToApp -> {
+                        routeUrl(event.uri, event.targetPackage)
+                        finish()
+                    }
+                    is RoutingEvent.ShowOverlay -> {
+                        showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
+                    }
+                    RoutingEvent.Finish -> finish()
                 }
-                is RoutingEvent.ShowOverlay -> {
-                    showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
-                }
-                RoutingEvent.Finish -> finish()
-                null -> showUi()
             }
         }
     }
