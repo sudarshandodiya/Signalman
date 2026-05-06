@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -9,6 +11,36 @@ plugins {
 android {
     namespace = "net.dodiya.signalman"
     compileSdk = 36
+
+    val localProps = Properties()
+    rootProject.file("local.properties").takeIf { it.exists() }?.let { file ->
+        file.inputStream().use { stream -> localProps.load(stream) }
+    }
+
+    val propFile =
+        localProps.getProperty("RELEASE_STORE_FILE")
+            ?: System.getenv("SIGNING_KEYSTORE_PATH")
+    val keystoreFile = propFile?.let { rootProject.file(it) }
+
+    signingConfigs {
+        if (keystoreFile?.exists() == true) {
+            val ksPassword =
+                localProps.getProperty("RELEASE_STORE_PASSWORD")
+                    ?: System.getenv("KEYSTORE_PASSWORD") ?: ""
+            val ksAlias =
+                localProps.getProperty("RELEASE_KEY_ALIAS")
+                    ?: System.getenv("KEY_ALIAS") ?: ""
+            val keyPass =
+                localProps.getProperty("RELEASE_KEY_PASSWORD")
+                    ?: System.getenv("KEY_PASSWORD") ?: ""
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = ksPassword
+                keyAlias = ksAlias
+                keyPassword = keyPass
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "net.dodiya.signalman"
@@ -25,7 +57,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

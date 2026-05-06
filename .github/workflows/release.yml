@@ -31,14 +31,30 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Decode signing keystore
+        run: |
+          echo "${{ secrets.SIGNING_KEYSTORE }}" | base64 -d > signalman-release.keystore
+        env:
+          SIGNING_KEYSTORE: ${{ secrets.SIGNING_KEYSTORE }}
+
       - name: Build Release APK
         run: ./gradlew assembleRelease --no-daemon
+        env:
+          SIGNING_KEYSTORE_PATH: signalman-release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Rename APK
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          mv app/build/outputs/apk/release/app-release.apk "Signalman-v${VERSION}.apk"
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk-${{ github.event.inputs.version }}
-          path: app/build/outputs/apk/release/*.apk
+          path: Signalman-*.apk
 
   create-release:
     name: Create GitHub Release
