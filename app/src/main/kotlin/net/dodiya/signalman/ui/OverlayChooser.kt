@@ -6,9 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ResolveInfo
 import android.net.Uri
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,21 +18,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -55,8 +47,6 @@ fun OverlayChooser(
     onAppSelection: (String, Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var selectedPackage by remember { mutableStateOf<String?>(null) }
-    var selectedRule by remember { mutableStateOf<Rule?>(null) }
     val context = LocalContext.current
     val pm = context.packageManager
 
@@ -133,11 +123,8 @@ fun OverlayChooser(
                         AppRow(
                             name = rule.name,
                             pkg = rule.targetPackage ?: context.getString(R.string.system),
-                            isSelected = selectedRule == rule,
-                            onClick = {
-                                selectedRule = rule
-                                selectedPackage = null
-                            },
+                            isSelected = false,
+                            onClick = { onRuleSelection(rule) },
                         )
                     }
                     item {
@@ -157,11 +144,16 @@ fun OverlayChooser(
                     AppRow(
                         name = res.loadLabel(pm).toString(),
                         pkg = pkg,
-                        isSelected = selectedPackage == pkg,
+                        isSelected = false,
                         onClick = {
-                            selectedPackage = pkg
-                            selectedRule = null
+                            val intent =
+                                Intent(Intent.ACTION_VIEW, uri).apply {
+                                    setPackage(pkg)
+                                }
+                            context.startActivity(intent)
+                            onDismiss()
                         },
+                        onLongClick = { onAppSelection(pkg, 2) },
                     )
                 }
 
@@ -179,37 +171,12 @@ fun OverlayChooser(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Button(
-                    onClick = {
-                        val pkg = selectedRule?.targetPackage ?: selectedPackage
-                        pkg?.let {
-                            val intent =
-                                Intent(Intent.ACTION_VIEW, uri).apply {
-                                    setPackage(it)
-                                }
-                            context.startActivity(intent)
-                            onDismiss()
-                        }
-                    },
-                    enabled = selectedPackage != null || selectedRule != null,
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 4.dp),
-                ) {
-                    Text(context.getString(R.string.action_once), style = MaterialTheme.typography.labelMedium)
-                }
-                OutlinedButton(
-                    onClick = { selectedPackage?.let { onAppSelection(it, 2) } },
-                    enabled = selectedPackage != null && selectedRule == null,
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 4.dp),
-                ) {
-                    Text(context.getString(R.string.action_always), style = MaterialTheme.typography.labelMedium)
-                }
-            }
+            Text(
+                text = "Tip: Long press an app to always open this domain with it.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
         }
     }
 }

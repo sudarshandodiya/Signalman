@@ -14,7 +14,6 @@ import net.dodiya.signalman.ui.SettingsViewModel
 import net.dodiya.signalman.ui.editrule.EditRuleViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModelOf
-import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -24,8 +23,8 @@ import org.koin.dsl.module
  */
 val dataModule =
     module {
-        // Database
-        single { AppDatabase.getDatabase(androidContext()) }
+        // Database — eager init to warm Room connection on app start, not on first URL
+        single(createdAtStart = true) { AppDatabase.getDatabase(androidContext()) }
         single { get<AppDatabase>().ruleDao() }
 
         // DataStore preferences
@@ -39,8 +38,8 @@ val dataModule =
             )
         }
 
-        // Repository with interface binding
-        singleOf(::RuleRepositoryImpl) { bind<RuleRepository>() }
+        // Repository with interface binding — eager to preload rules into cache on app start
+        single<RuleRepository>(createdAtStart = true) { RuleRepositoryImpl(ruleDao = get()) }
     }
 
 /**

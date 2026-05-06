@@ -21,15 +21,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import net.dodiya.signalman.ui.ImportExportScreen
 import net.dodiya.signalman.ui.OverlayChooser
 import net.dodiya.signalman.ui.RoutingEvent
 import net.dodiya.signalman.ui.RoutingViewModel
 import net.dodiya.signalman.ui.RuleViewModel
-import net.dodiya.signalman.ui.SettingsScreen
 import net.dodiya.signalman.ui.SettingsViewModel
 import net.dodiya.signalman.ui.editrule.EditRuleScreen
 import net.dodiya.signalman.ui.editrule.EditRuleViewModel
@@ -70,20 +68,24 @@ class MainActivity : ComponentActivity() {
 
     private fun observeRoutingEvents() {
         lifecycleScope.launch {
-            val event =
-                withTimeoutOrNull(ROUTING_TIMEOUT_MS) {
-                    routingViewModel.events.first()
+            val timeoutJob =
+                launch {
+                    delay(ROUTING_TIMEOUT_MS)
+                    showUi()
                 }
-            when (event) {
-                is RoutingEvent.RouteToApp -> {
-                    routeUrl(event.uri, event.targetPackage)
-                    finish()
+
+            routingViewModel.events.collect { event ->
+                timeoutJob.cancel()
+                when (event) {
+                    is RoutingEvent.RouteToApp -> {
+                        routeUrl(event.uri, event.targetPackage)
+                        finish()
+                    }
+                    is RoutingEvent.ShowOverlay -> {
+                        showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
+                    }
+                    RoutingEvent.Finish -> finish()
                 }
-                is RoutingEvent.ShowOverlay -> {
-                    showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
-                }
-                RoutingEvent.Finish -> finish()
-                null -> showUi()
             }
         }
     }
@@ -168,6 +170,7 @@ class MainActivity : ComponentActivity() {
             composable("ruleList") {
                 RuleListScreen(
                     viewModel = viewModel,
+                    settingsViewModel = settingsViewModel,
                     onAddRule = { name, exampleUrl ->
                         val encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString())
                         val encodedUrl =
@@ -188,14 +191,7 @@ class MainActivity : ComponentActivity() {
                         navController.navigate(route)
                     },
                     onEditRule = { ruleId -> navController.navigate("editRule/$ruleId") },
-                    onNavigateToSettings = { navController.navigate("settings") },
-                )
-            }
-            composable("settings") {
-                SettingsScreen(
-                    onNavigateBack = { navController.popBackStack() },
                     onNavigateToImportExport = { navController.navigate("importExport") },
-                    viewModel = settingsViewModel,
                 )
             }
             composable("importExport") {

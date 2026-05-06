@@ -56,8 +56,59 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
 ) {
     val context = LocalContext.current
-    val pm = context.packageManager
     val snackbarHostState = remember { SnackbarHostState() }
+    val importExportState by viewModel.importExportState.collectAsStateWithLifecycle()
+    val pendingImportRules by viewModel.pendingImportRules.collectAsStateWithLifecycle()
+
+    LaunchedEffect(pendingImportRules) {
+        if (pendingImportRules != null) {
+            onNavigateToImportExport()
+        }
+    }
+
+    LaunchedEffect(importExportState) {
+        when (val state = importExportState) {
+            is ImportExportState.Success -> {
+                snackbarHostState.showSnackbar(state.message)
+                viewModel.resetImportExportState()
+            }
+            is ImportExportState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+                viewModel.resetImportExportState()
+            }
+            else -> {}
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(context.getString(R.string.title_settings), fontWeight = FontWeight.SemiBold) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = context.getString(R.string.action_back))
+                    }
+                },
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { paddingValues ->
+        SettingsContent(
+            modifier = Modifier.padding(paddingValues),
+            onNavigateToImportExport = onNavigateToImportExport,
+            viewModel = viewModel,
+        )
+    }
+}
+
+@Composable
+fun SettingsContent(
+    modifier: Modifier = Modifier,
+    onNavigateToImportExport: () -> Unit,
+    viewModel: SettingsViewModel,
+) {
+    val context = LocalContext.current
+    val pm = context.packageManager
     val importExportState by viewModel.importExportState.collectAsStateWithLifecycle()
 
     val browserIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("http://"))
@@ -95,78 +146,49 @@ fun SettingsScreen(
         }
     }
 
-    LaunchedEffect(importExportState) {
-        when (val state = importExportState) {
-            is ImportExportState.Success -> {
-                snackbarHostState.showSnackbar(state.message)
-                viewModel.resetImportExportState()
-            }
-            is ImportExportState.Error -> {
-                snackbarHostState.showSnackbar(state.message)
-                viewModel.resetImportExportState()
-            }
-            else -> {}
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(context.getString(R.string.title_settings), fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = context.getString(R.string.action_back))
-                    }
-                },
+    LazyColumn(
+        modifier =
+            modifier
+                .fillMaxSize(),
+    ) {
+        val settingsItems =
+            listOf(
+                Triple(
+                    context.getString(R.string.export_rules_title),
+                    context.getString(R.string.export_rules_subtitle),
+                    Icons.Default.FileUpload,
+                ) to { exportLauncher.launch("signalman_rules.json") },
+                Triple(
+                    context.getString(R.string.import_rules_title),
+                    context.getString(R.string.import_rules_subtitle),
+                    Icons.Default.FileDownload,
+                ) to { importLauncher.launch(arrayOf("application/json")) },
+                Triple(
+                    context.getString(R.string.browser_visibility_title),
+                    context.getString(R.string.browser_visibility_subtitle),
+                    Icons.Default.Language,
+                ) to { showBrowserDialog = true },
             )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { paddingValues ->
-        LazyColumn(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-        ) {
-            val settingsItems =
-                listOf(
-                    Triple(
-                        context.getString(R.string.export_rules_title),
-                        context.getString(R.string.export_rules_subtitle),
-                        Icons.Default.FileUpload,
-                    ) to { exportLauncher.launch("signalman_rules.json") },
-                    Triple(
-                        context.getString(R.string.import_rules_title),
-                        context.getString(R.string.import_rules_subtitle),
-                        Icons.Default.FileDownload,
-                    ) to { importLauncher.launch(arrayOf("application/json")) },
-                    Triple(
-                        context.getString(R.string.browser_visibility_title),
-                        context.getString(R.string.browser_visibility_subtitle),
-                        Icons.Default.Language,
-                    ) to { showBrowserDialog = true },
-                )
 
-            items(settingsItems.size) { index ->
-                val (triple, onClick) = settingsItems[index]
-                val (title, subtitle, icon) = triple
-                SettingsClickableItem(
-                    title = title,
-                    subtitle = subtitle,
-                    icon = icon,
-                    onClick = onClick,
-                    isLastItem = index == settingsItems.size - 1,
-                )
-            }
+        items(settingsItems.size) { index ->
+            val (triple, onClick) = settingsItems[index]
+            val (title, subtitle, icon) = triple
+            SettingsClickableItem(
+                title = title,
+                subtitle = subtitle,
+                icon = icon,
+                onClick = onClick,
+                isLastItem = index == settingsItems.size - 1,
+            )
+        }
 
-            if (importExportState is ImportExportState.Loading) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                    }
+        if (importExportState is ImportExportState.Loading) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 }
             }
         }

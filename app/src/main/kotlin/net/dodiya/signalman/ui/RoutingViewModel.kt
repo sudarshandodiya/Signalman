@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import net.dodiya.signalman.data.PreferenceManager
 import net.dodiya.signalman.data.Rule
 import net.dodiya.signalman.data.RuleRepository
@@ -48,22 +47,12 @@ class RoutingViewModel(
     private val _isProcessing = MutableStateFlow(false)
     val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
 
-    companion object {
-        private const val RULES_TIMEOUT_MS = 1000L
-    }
-
     fun handleIncomingUrl(uri: Uri) {
         viewModelScope.launch {
             _isProcessing.value = true
             try {
                 val urlString = uri.toString()
-
-                // Wait for rules to load or timeout
-                val rules =
-                    withTimeoutOrNull(RULES_TIMEOUT_MS) {
-                        repository.allRules.first { it.isNotEmpty() }
-                    } ?: repository.allRules.first()
-
+                val rules = repository.cachedRules
                 val matchedRules = matchRuleUseCase(urlString, rules)
                 val hiddenBrowsers = preferenceManager.hiddenBrowsers.first()
 

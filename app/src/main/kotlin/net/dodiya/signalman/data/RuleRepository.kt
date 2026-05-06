@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface RuleRepository {
     val allRules: Flow<List<Rule>>
+    val cachedRules: List<Rule>
 
     suspend fun getRule(id: Int): Rule?
 

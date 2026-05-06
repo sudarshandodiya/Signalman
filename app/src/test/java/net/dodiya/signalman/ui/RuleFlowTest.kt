@@ -17,6 +17,9 @@ import net.dodiya.signalman.data.PreferenceManager
 import net.dodiya.signalman.data.RuleRepository
 import net.dodiya.signalman.domain.MatchRuleUseCase
 import net.dodiya.signalman.domain.TransformUrlUseCase
+import net.dodiya.signalman.ui.ImportExportState
+import net.dodiya.signalman.ui.RuleViewModel
+import net.dodiya.signalman.ui.SettingsViewModel
 import net.dodiya.signalman.ui.rulelist.RuleListScreen
 import net.dodiya.signalman.ui.theme.SignalmanTheme
 import org.junit.After
@@ -40,6 +43,7 @@ class RuleFlowTest {
     private val preferenceManager = mockk<PreferenceManager>(relaxed = true)
     private val matchRuleUseCase = MatchRuleUseCase()
     private val transformUrlUseCase = TransformUrlUseCase()
+    private val settingsViewModel = mockk<SettingsViewModel>(relaxed = true)
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -52,6 +56,8 @@ class RuleFlowTest {
         every { repository.allRules } returns MutableStateFlow(emptyList())
         every { preferenceManager.globalDefaultPackage } returns MutableStateFlow(null)
         every { preferenceManager.isAutoRuleGenerationEnabled } returns MutableStateFlow(true)
+        every { settingsViewModel.hiddenBrowsers } returns MutableStateFlow(emptySet())
+        every { settingsViewModel.importExportState } returns MutableStateFlow(ImportExportState.Idle as ImportExportState)
 
         viewModel =
             RuleViewModel(
@@ -79,13 +85,14 @@ class RuleFlowTest {
             SignalmanTheme {
                 RuleListScreen(
                     viewModel = viewModel,
+                    settingsViewModel = settingsViewModel,
                     onAddRule = { name, url ->
                         navigatedToEdit = true
                         capturedName = name
                         capturedUrl = url
                     },
                     onEditRule = {},
-                    onNavigateToSettings = {},
+                    onNavigateToImportExport = {},
                 )
             }
         }
