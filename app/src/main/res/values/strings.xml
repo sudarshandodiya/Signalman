@@ -40,6 +40,17 @@
     <string name="no_custom_rules">No custom rules yet.</string>
     <string name="no_auto_rules">No auto-generated rules yet.</string>
     <string name="cd_add_rule">Add Rule</string>
+    <string name="cd_rule_enabled">Enable rule</string>
+    <string name="cd_rule_disabled">Disable rule</string>
+    <string name="empty_custom_rules_title">No custom rules yet</string>
+    <string name="empty_custom_rules_subtitle">Create rules to route specific URLs to your favorite apps</string>
+    <string name="empty_auto_rules_title">No auto rules yet</string>
+    <string name="empty_auto_rules_subtitle_enabled">Long-press an app in the chooser to remember this domain</string>
+    <string name="empty_auto_rules_subtitle_disabled">Enable auto rule generation to get prompts for new links</string>
+    <string name="badge_transform">Transform</string>
+    <string name="badge_clean">Clean</string>
+    <string name="delete_rule_title">Delete rule?</string>
+    <string name="delete_rule_message">This will permanently remove "%1$s".</string>
 
     <!-- Auto Rules Header -->
     <string name="auto_enable_title">Enable auto rule generation</string>
@@ -77,6 +88,7 @@
     <string name="enable_transformation">Enable Transformation</string>
     <string name="mode_simple">Simple</string>
     <string name="mode_regex">Regex</string>
+    <string name="no_components_found">No components found in example URL</string>
 
     <!-- Target App Section -->
     <string name="search_app_label">Search App</string>
@@ -96,6 +108,8 @@
     <string name="import_rules_subtitle">Load rules from a JSON file</string>
     <string name="browser_visibility_title">Browser Visibility</string>
     <string name="browser_visibility_subtitle">Select which browsers to show in overlay</string>
+    <string name="clean_urls_title">Clean tracking parameters</string>
+    <string name="clean_urls_subtitle">Remove utm_*, fbclid, gclid and other tracking parameters before routing</string>
 
     <!-- Import/Export Screen -->
     <string name="import_count">Import (%1$d)</string>
@@ -110,6 +124,14 @@
     <string name="system">System</string>
     <string name="url_clipboard_label">URL</string>
     <string name="share_url_title">Share URL</string>
+    <string name="overlay_tip">Tip: Long press an app to always open this domain with it.</string>
+
+    <!-- Live Preview -->
+    <string name="live_preview_title">Live Preview</string>
+    <string name="live_preview_matches">Matches</string>
+    <string name="live_preview_no_match">Does Not Match</string>
+    <string name="live_preview_original">Original: %1$s</string>
+    <string name="live_preview_result">Result: %1$s</string>
 
     <!-- Component Item -->
     <string name="cd_edit_component">Edit</string>

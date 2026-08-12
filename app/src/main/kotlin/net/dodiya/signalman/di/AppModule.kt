@@ -5,6 +5,7 @@ import net.dodiya.signalman.data.AppInfoRepository
 import net.dodiya.signalman.data.PreferenceManager
 import net.dodiya.signalman.data.RuleRepository
 import net.dodiya.signalman.data.RuleRepositoryImpl
+import net.dodiya.signalman.domain.CleanUrlUseCase
 import net.dodiya.signalman.domain.CreateAutoRuleUseCase
 import net.dodiya.signalman.domain.MatchRuleUseCase
 import net.dodiya.signalman.domain.TransformUrlUseCase
@@ -13,9 +14,9 @@ import net.dodiya.signalman.ui.RuleViewModel
 import net.dodiya.signalman.ui.SettingsViewModel
 import net.dodiya.signalman.ui.editrule.EditRuleViewModel
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 /**
@@ -51,6 +52,7 @@ val domainModule =
         factoryOf(::MatchRuleUseCase)
         factoryOf(::TransformUrlUseCase)
         factoryOf(::CreateAutoRuleUseCase)
+        factoryOf(::CleanUrlUseCase)
     }
 
 /**
