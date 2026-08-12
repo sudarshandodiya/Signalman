@@ -2,9 +2,10 @@ package net.dodiya.signalman.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import net.dodiya.signalman.data.Filter
 import net.dodiya.signalman.data.MatchType
 import net.dodiya.signalman.ui.editrule.EditRuleEvent
@@ -34,30 +35,30 @@ class EditRuleScreenTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Test Rule").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("Test Rule").onFirst().assertIsDisplayed()
         composeTestRule.onNodeWithText("example.com").assertIsDisplayed()
         composeTestRule.onNodeWithText("Add Condition").assertIsDisplayed()
     }
 
     @Test
-    fun editRuleScreenTypingExampleUrlTriggersEvent() {
-        var lastEvent: EditRuleEvent? = null
-        val initialState = EditRuleUiState()
+    fun editRuleScreenSwitchesToTransformationTab() {
+        val initialState =
+            EditRuleUiState(
+                name = "Test Rule",
+                filters = listOf(Filter("example.com", MatchType.CONTAINS)),
+            )
 
         composeTestRule.setContent {
             EditRuleScreen(
                 uiState = initialState,
                 installedApps = emptyList(),
-                onEvent = { lastEvent = it },
+                onEvent = {},
                 onNavigateBack = {},
             )
         }
 
-        composeTestRule.onNodeWithText("Example URL for live testing").performTextInput("https://test.com")
-
-        // Assert that the event was triggered
-        assert(lastEvent is EditRuleEvent.ExampleUrlChanged)
-        assert((lastEvent as EditRuleEvent.ExampleUrlChanged).url == "https://test.com")
+        composeTestRule.onNodeWithText("Transformation").performClick()
+        composeTestRule.onNodeWithText("Enable Transformation").assertIsDisplayed()
     }
 
     @Test

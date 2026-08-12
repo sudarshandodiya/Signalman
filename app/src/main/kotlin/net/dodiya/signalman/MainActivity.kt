@@ -21,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.dodiya.signalman.ui.ImportExportScreen
@@ -42,6 +43,8 @@ class MainActivity : ComponentActivity() {
     private val viewModel: RuleViewModel by viewModel()
     private val routingViewModel: RoutingViewModel by viewModel()
 
+    private var routingTimeoutJob: Job? = null
+
     companion object {
         private const val TAG = "MainActivity"
         private const val ROUTING_TIMEOUT_MS = 2000L
@@ -52,8 +55,7 @@ class MainActivity : ComponentActivity() {
             setTheme(R.style.Theme_Signalman)
         }
         super.onCreate(savedInstanceState)
-        val isRoutingIntent = intent?.action == Intent.ACTION_VIEW
-        observeRoutingEvents(hasTimeout = isRoutingIntent)
+        observeRoutingEvents()
         handleIntent(intent)
     }
 
@@ -65,37 +67,51 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent) {
         val intentData: Uri? = intent.data
-        if (intent.action == Intent.ACTION_VIEW && intentData != null) {
-            routingViewModel.handleIncomingUrl(intentData)
-        }
-    }
-
-    private fun observeRoutingEvents(hasTimeout: Boolean) {
-        lifecycleScope.launch {
-            if (hasTimeout) {
-                val timeoutJob =
-                    launch {
-                        delay(ROUTING_TIMEOUT_MS)
-                        showUi()
-                    }
-
-                routingViewModel.events.collect { event ->
-                    timeoutJob.cancel()
-                    when (event) {
-                        is RoutingEvent.RouteToApp -> {
-                            routeUrl(event.uri, event.targetPackage)
-                            finish()
-                        }
-                        is RoutingEvent.ShowOverlay -> {
-                            showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
-                        }
-                        RoutingEvent.Finish -> finish()
-                    }
-                }
-            } else {
+        when {
+            intent.action == Intent.ACTION_VIEW && intentData != null -> {
+                startRoutingTimeout()
+                routingViewModel.handleIncomingUrl(intentData)
+            }
+            else -> {
+                // Launcher launch (or an intent we cannot route): show the main UI.
+                routingTimeoutJob?.cancel()
+                routingTimeoutJob = null
                 showUi()
             }
         }
+    }
+
+    /**
+     * Collects routing events for the whole activity lifetime so that URLs delivered
+     * via [onNewIntent] (singleTop) are never dropped, regardless of whether the
+     * activity was started from the launcher or from a URL click.
+     */
+    private fun observeRoutingEvents() {
+        lifecycleScope.launch {
+            routingViewModel.events.collect { event ->
+                routingTimeoutJob?.cancel()
+                routingTimeoutJob = null
+                when (event) {
+                    is RoutingEvent.RouteToApp -> {
+                        routeUrl(event.uri, event.targetPackage)
+                        finish()
+                    }
+                    is RoutingEvent.ShowOverlay -> {
+                        showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
+                    }
+                    RoutingEvent.Finish -> finish()
+                }
+            }
+        }
+    }
+
+    private fun startRoutingTimeout() {
+        routingTimeoutJob?.cancel()
+        routingTimeoutJob =
+            lifecycleScope.launch {
+                delay(ROUTING_TIMEOUT_MS)
+                showUi()
+            }
     }
 
     private fun routeUrl(

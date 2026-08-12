@@ -1,13 +1,16 @@
 package net.dodiya.signalman.ui.rulelist
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
@@ -25,8 +28,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import net.dodiya.signalman.R
 import net.dodiya.signalman.data.AppInfo
 
@@ -80,6 +86,18 @@ fun AppPickerDialog(
                         ListItem(
                             headlineContent = { Text(app.name) },
                             supportingContent = { Text(app.packageName) },
+                            leadingContent = {
+                                app.icon?.let { icon ->
+                                    Image(
+                                        bitmap = icon.toBitmap().asImageBitmap(),
+                                        contentDescription = null,
+                                        modifier =
+                                            Modifier
+                                                .size(32.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                    )
+                                }
+                            },
                             modifier = Modifier.clickable { onSelect(app.packageName) },
                             trailingContent = { if (currentDefault == app.packageName) RadioButton(selected = true, onClick = null) },
                         )

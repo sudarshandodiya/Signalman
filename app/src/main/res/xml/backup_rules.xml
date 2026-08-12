@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
+   Backup rules for Signalman.
    See https://developer.android.com/guide/topics/data/autobackup
    for details.
    Note: This file is ignored for devices older than API 31
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
+    <!-- DataStore preferences -->
     <include domain="sharedpref" path="."/>
+    <!-- Room database holding user rules -->
+    <include domain="database" path="signalman_database"/>
 </full-backup-content>

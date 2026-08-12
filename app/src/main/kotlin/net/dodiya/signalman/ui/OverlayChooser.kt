@@ -145,6 +145,7 @@ fun OverlayChooser(
                         name = res.loadLabel(pm).toString(),
                         pkg = pkg,
                         isSelected = false,
+                        icon = res.loadIcon(pm),
                         onClick = {
                             val intent =
                                 Intent(Intent.ACTION_VIEW, uri).apply {
@@ -172,7 +173,7 @@ fun OverlayChooser(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "Tip: Long press an app to always open this domain with it.",
+                text = context.getString(R.string.overlay_tip),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.align(Alignment.CenterHorizontally),

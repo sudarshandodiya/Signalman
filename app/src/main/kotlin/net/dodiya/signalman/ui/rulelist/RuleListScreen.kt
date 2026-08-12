@@ -2,25 +2,33 @@ package net.dodiya.signalman.ui.rulelist
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,9 +41,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.dodiya.signalman.R
+import net.dodiya.signalman.data.Rule
 import net.dodiya.signalman.ui.ImportExportState
 import net.dodiya.signalman.ui.RuleViewModel
 import net.dodiya.signalman.ui.SettingsContent
@@ -58,6 +68,7 @@ fun RuleListScreen(
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var showAddRuleDialog by remember { mutableStateOf(false) }
+    var rulePendingDelete by remember { mutableStateOf<Rule?>(null) }
 
     val filteredRules =
         remember(rules, selectedTab) {
@@ -150,22 +161,21 @@ fun RuleListScreen(
                     }
 
                     if (filteredRules.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(
-                                if (selectedTab == 0) {
-                                    context.getString(R.string.no_custom_rules)
-                                } else {
-                                    context.getString(R.string.no_auto_rules)
-                                },
-                            )
-                        }
+                        RuleListEmptyState(
+                            isAutoTab = selectedTab == 1,
+                            isAutoEnabled = isAutoEnabled,
+                            onAddRule = { showAddRuleDialog = true },
+                        )
                     } else {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            items(filteredRules) { rule ->
+                            items(filteredRules, key = { it.id }) { rule ->
                                 RuleItem(
                                     rule = rule,
-                                    onDelete = { viewModel.delete(rule) },
+                                    onDelete = { rulePendingDelete = rule },
                                     onEdit = { onEditRule(rule.id) },
+                                    onEnabledChange = { enabled ->
+                                        viewModel.update(rule.copy(isEnabled = enabled))
+                                    },
                                 )
                             }
                         }
@@ -188,6 +198,76 @@ fun RuleListScreen(
                     onAddRule(name, url)
                 },
             )
+        }
+    }
+
+    rulePendingDelete?.let { rule ->
+        AlertDialog(
+            onDismissRequest = { rulePendingDelete = null },
+            title = { Text(context.getString(R.string.delete_rule_title)) },
+            text = { Text(context.getString(R.string.delete_rule_message, rule.name)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.delete(rule)
+                        rulePendingDelete = null
+                    },
+                ) {
+                    Text(context.getString(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { rulePendingDelete = null }) {
+                    Text(context.getString(R.string.action_cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun RuleListEmptyState(
+    isAutoTab: Boolean,
+    isAutoEnabled: Boolean,
+    onAddRule: () -> Unit,
+) {
+    val context = LocalContext.current
+    Box(modifier = Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = if (isAutoTab) Icons.Default.AutoAwesome else Icons.Default.Rule,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.outlineVariant,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text =
+                    if (isAutoTab) {
+                        context.getString(R.string.empty_auto_rules_title)
+                    } else {
+                        context.getString(R.string.empty_custom_rules_title)
+                    },
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text =
+                    when {
+                        isAutoTab && isAutoEnabled -> context.getString(R.string.empty_auto_rules_subtitle_enabled)
+                        isAutoTab -> context.getString(R.string.empty_auto_rules_subtitle_disabled)
+                        else -> context.getString(R.string.empty_custom_rules_subtitle)
+                    },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline,
+                textAlign = TextAlign.Center,
+            )
+            if (!isAutoTab) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = onAddRule) {
+                    Text(context.getString(R.string.action_add))
+                }
+            }
         }
     }
 }

@@ -20,8 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import net.dodiya.signalman.R
 
 @Composable
 fun LivePreviewHeader(
@@ -30,13 +32,14 @@ fun LivePreviewHeader(
     transformedUrl: String?,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Live Preview",
+                text = context.getString(R.string.live_preview_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
@@ -50,7 +53,12 @@ fun LivePreviewHeader(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isMatch) "Matches" else "Does Not Match",
+                    text =
+                        if (isMatch) {
+                            context.getString(R.string.live_preview_matches)
+                        } else {
+                            context.getString(R.string.live_preview_no_match)
+                        },
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                 )
@@ -59,12 +67,12 @@ fun LivePreviewHeader(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Original: $exampleUrl",
+                text = context.getString(R.string.live_preview_original, exampleUrl),
                 style = MaterialTheme.typography.bodySmall,
             )
             if (transformedUrl != null && transformedUrl != exampleUrl) {
                 Text(
-                    text = "Result: $transformedUrl",
+                    text = context.getString(R.string.live_preview_result, transformedUrl),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
