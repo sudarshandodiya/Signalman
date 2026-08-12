@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.dodiya.signalman.data.PreferenceManager
@@ -42,6 +43,14 @@ class SettingsViewModel(
                 initialValue = emptySet(),
             )
 
+    val isCleanUrlsEnabled: StateFlow<Boolean> =
+        preferenceManager.isCleanUrlsEnabled
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = false,
+            )
+
     private val _importExportState = MutableStateFlow<ImportExportState>(ImportExportState.Idle)
     val importExportState: StateFlow<ImportExportState> = _importExportState.asStateFlow()
 
@@ -57,23 +66,27 @@ class SettingsViewModel(
         }
     }
 
+    fun setCleanUrlsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            preferenceManager.setCleanUrlsEnabled(enabled)
+        }
+    }
+
     fun exportRules(uri: Uri) {
         viewModelScope.launch {
             _importExportState.value = ImportExportState.Loading
             try {
-                ruleRepository.allRules.collect { rules ->
-                    if (rules.isEmpty()) {
-                        _importExportState.value = ImportExportState.Error("No rules to export")
-                        return@collect
-                    }
-
-                    val json = RuleExporter.exportRules(rules)
-                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(json.toByteArray())
-                    }
-                    _importExportState.value = ImportExportState.Success("Exported ${rules.size} rules successfully")
-                    return@collect
+                val rules = ruleRepository.allRules.first()
+                if (rules.isEmpty()) {
+                    _importExportState.value = ImportExportState.Error("No rules to export")
+                    return@launch
                 }
+
+                val json = RuleExporter.exportRules(rules)
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(json.toByteArray())
+                }
+                _importExportState.value = ImportExportState.Success("Exported ${rules.size} rules successfully")
             } catch (e: java.io.IOException) {
                 android.util.Log.e("SettingsViewModel", "Export failed", e)
                 _importExportState.value = ImportExportState.Error("Export failed: ${e.message}")

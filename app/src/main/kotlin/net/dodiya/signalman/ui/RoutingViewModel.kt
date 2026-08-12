@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import net.dodiya.signalman.data.PreferenceManager
 import net.dodiya.signalman.data.Rule
 import net.dodiya.signalman.data.RuleRepository
+import net.dodiya.signalman.domain.CleanUrlUseCase
 import net.dodiya.signalman.domain.CreateAutoRuleUseCase
 import net.dodiya.signalman.domain.MatchRuleUseCase
 import net.dodiya.signalman.domain.TransformUrlUseCase
@@ -40,6 +41,7 @@ class RoutingViewModel(
     private val matchRuleUseCase: MatchRuleUseCase,
     private val transformUrlUseCase: TransformUrlUseCase,
     private val createAutoRuleUseCase: CreateAutoRuleUseCase,
+    private val cleanUrlUseCase: CleanUrlUseCase,
 ) : ViewModel() {
     private val _events = MutableSharedFlow<RoutingEvent>()
     val events: SharedFlow<RoutingEvent> = _events.asSharedFlow()
@@ -51,7 +53,10 @@ class RoutingViewModel(
         viewModelScope.launch {
             _isProcessing.value = true
             try {
-                val urlString = uri.toString()
+                // Global setting: clean tracking parameters before matching and routing.
+                val isGlobalCleanEnabled = preferenceManager.isCleanUrlsEnabled.first()
+                val baseUri = if (isGlobalCleanEnabled) cleanUrlUseCase(uri) else uri
+                val urlString = baseUri.toString()
                 val rules = repository.cachedRules
                 val matchedRules = matchRuleUseCase(urlString, rules)
                 val hiddenBrowsers = preferenceManager.hiddenBrowsers.first()
@@ -59,19 +64,20 @@ class RoutingViewModel(
                 when {
                     matchedRules.size == 1 -> {
                         val rule = matchedRules[0]
-                        val finalUri = transformUrlUseCase(uri, rule)
-                        _events.emit(RoutingEvent.RouteToApp(finalUri, rule.targetPackage))
+                        val finalUri = if (rule.isCleanUrl) cleanUrlUseCase(baseUri) else baseUri
+                        val routedUri = transformUrlUseCase(finalUri, rule)
+                        _events.emit(RoutingEvent.RouteToApp(routedUri, rule.targetPackage))
                     }
                     matchedRules.size > 1 -> {
-                        _events.emit(RoutingEvent.ShowOverlay(uri, matchedRules, hiddenBrowsers))
+                        _events.emit(RoutingEvent.ShowOverlay(baseUri, matchedRules, hiddenBrowsers))
                     }
                     else -> {
                         val isAutoEnabled = preferenceManager.isAutoRuleGenerationEnabled.first()
                         if (isAutoEnabled) {
-                            _events.emit(RoutingEvent.ShowOverlay(uri, emptyList(), hiddenBrowsers))
+                            _events.emit(RoutingEvent.ShowOverlay(baseUri, emptyList(), hiddenBrowsers))
                         } else {
                             val globalDefault = preferenceManager.globalDefaultPackage.first()
-                            _events.emit(RoutingEvent.RouteToApp(uri, globalDefault))
+                            _events.emit(RoutingEvent.RouteToApp(baseUri, globalDefault))
                         }
                     }
                 }
@@ -92,8 +98,9 @@ class RoutingViewModel(
         rule: Rule,
     ) {
         viewModelScope.launch {
-            val finalUri = transformUrlUseCase(uri, rule)
-            _events.emit(RoutingEvent.RouteToApp(finalUri, rule.targetPackage))
+            val finalUri = if (rule.isCleanUrl) cleanUrlUseCase(uri) else uri
+            val routedUri = transformUrlUseCase(finalUri, rule)
+            _events.emit(RoutingEvent.RouteToApp(routedUri, rule.targetPackage))
         }
     }
 

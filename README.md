@@ -1,7 +1,7 @@
 # Signalman
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9-blue.svg?logo=kotlin)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.1-blue.svg?logo=kotlin)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Android-14%2B-green.svg?logo=android)](https://developer.android.com)
 
 Signalman is an advanced URL router for Android that acts as a default handler for HTTP and HTTPS links. It provides powerful customization options to route specific URLs to specific applications or browsers based on user-defined rules.
@@ -11,6 +11,7 @@ Signalman is an advanced URL router for Android that acts as a default handler f
 - **Custom URL Rules**: Create rules to route URLs to specific apps based on patterns
 - **Auto Rule Generation**: Automatically prompt to create rules for new links
 - **Pattern Matching**: Support for contains, equals, starts with, ends with, and regex patterns
+- **URL Cleaning**: Strip tracking parameters (utm_*, fbclid, gclid, ...) globally or per rule
 - **URL Transformation**: Transform URLs before routing with simple or regex-based replacement
 - **Browser Selection**: Choose which browsers appear in the overlay chooser
 - **Import/Export**: Backup and restore your rules as JSON
@@ -66,6 +67,15 @@ Signalman is an advanced URL router for Android that acts as a default handler f
 3. Set a fallback default app (optional)
 4. When you open a link that doesn't match any rule, you'll be prompted to create one
 
+### URL Cleaning
+
+Signalman can strip tracking parameters such as `utm_*`, `fbclid`, `gclid` and others before a URL is routed to its target app:
+
+- **Global**: In **Settings**, enable **Clean tracking parameters** to clean every routed URL.
+- **Per rule**: In the rule editor, open the **Transformation** tab and enable **Clean tracking parameters** to clean only URLs matched by that rule.
+
+The live preview in the rule editor shows the cleaned URL before you save.
+
 ### URL Transformation
 
 When editing a rule, you can enable transformation to modify URLs before routing:
@@ -93,9 +103,9 @@ Signalman is built with modern Android architecture:
 
 ### Prerequisites
 
-- Android Studio Hedgehog (2023.1.1) or later
-- JDK 11 or higher
-- Android SDK with API 34
+- Android Studio Ladybug (2024.2.1) or later
+- JDK 17
+- Android SDK with API 36
 
 ### Build Instructions
 

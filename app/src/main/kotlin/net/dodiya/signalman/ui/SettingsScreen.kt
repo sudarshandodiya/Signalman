@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Language
@@ -30,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -122,6 +124,7 @@ fun SettingsContent(
         }
 
     val hiddenBrowsers by viewModel.hiddenBrowsers.collectAsStateWithLifecycle()
+    val isCleanUrlsEnabled by viewModel.isCleanUrlsEnabled.collectAsStateWithLifecycle()
     var showBrowserDialog by remember { mutableStateOf(false) }
 
     val exportLauncher =
@@ -168,17 +171,34 @@ fun SettingsContent(
                     context.getString(R.string.browser_visibility_subtitle),
                     Icons.Default.Language,
                 ) to { showBrowserDialog = true },
+                Triple(
+                    context.getString(R.string.clean_urls_title),
+                    context.getString(R.string.clean_urls_subtitle),
+                    Icons.Default.CleaningServices,
+                ) to { viewModel.setCleanUrlsEnabled(!isCleanUrlsEnabled) },
             )
 
         items(settingsItems.size) { index ->
             val (triple, onClick) = settingsItems[index]
             val (title, subtitle, icon) = triple
+            val isCleanUrlsItem = index == settingsItems.size - 1
             SettingsClickableItem(
                 title = title,
                 subtitle = subtitle,
                 icon = icon,
                 onClick = onClick,
                 isLastItem = index == settingsItems.size - 1,
+                trailing =
+                    if (isCleanUrlsItem) {
+                        {
+                            Switch(
+                                checked = isCleanUrlsEnabled,
+                                onCheckedChange = { viewModel.setCleanUrlsEnabled(it) },
+                            )
+                        }
+                    } else {
+                        null
+                    },
             )
         }
 

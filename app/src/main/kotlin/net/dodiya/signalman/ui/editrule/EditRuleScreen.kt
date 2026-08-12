@@ -116,6 +116,8 @@ fun EditRuleScreen(
                     when (selectedTabIndex) {
                         0 ->
                             ConditionsSection(
+                                name = uiState.name,
+                                onNameChange = { onEvent(EditRuleEvent.NameChanged(it)) },
                                 filters = uiState.filters,
                                 onEvent = onEvent,
                                 logicalOperator = uiState.logicalOperator,
@@ -123,6 +125,8 @@ fun EditRuleScreen(
                             )
                         1 ->
                             TransformationSection(
+                                isCleanUrl = uiState.isCleanUrl,
+                                onCleanUrlChange = { onEvent(EditRuleEvent.CleanUrlChanged(it)) },
                                 isTransformEnabled = uiState.isTransformEnabled,
                                 onEvent = onEvent,
                                 replacePattern = uiState.replacePattern,

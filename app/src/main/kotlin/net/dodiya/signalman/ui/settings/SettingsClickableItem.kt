@@ -27,6 +27,7 @@ fun SettingsClickableItem(
     icon: ImageVector,
     onClick: () -> Unit,
     isLastItem: Boolean = false,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Column(modifier = Modifier.clickable(onClick = onClick)) {
         Row(
@@ -55,11 +56,15 @@ fun SettingsClickableItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            )
+            if (trailing != null) {
+                trailing()
+            } else {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                )
+            }
         }
         if (!isLastItem) {
             HorizontalDivider(

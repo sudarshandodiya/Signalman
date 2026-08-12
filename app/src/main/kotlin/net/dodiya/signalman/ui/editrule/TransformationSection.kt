@@ -37,6 +37,8 @@ import net.dodiya.signalman.ui.components.ComponentItem
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransformationSection(
+    isCleanUrl: Boolean,
+    onCleanUrlChange: (Boolean) -> Unit,
     isTransformEnabled: Boolean,
     onEvent: (EditRuleEvent) -> Unit,
     replacePattern: String,
@@ -62,6 +64,29 @@ fun TransformationSection(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.clean_urls_title),
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    stringResource(R.string.clean_urls_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+            }
+            Switch(
+                checked = isCleanUrl,
+                onCheckedChange = onCleanUrlChange,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
@@ -182,7 +207,7 @@ fun TransformationSection(
 
             if (visibleComponents.isEmpty()) {
                 Text(
-                    text = "No components found in example URL",
+                    text = stringResource(R.string.no_components_found),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(16.dp),

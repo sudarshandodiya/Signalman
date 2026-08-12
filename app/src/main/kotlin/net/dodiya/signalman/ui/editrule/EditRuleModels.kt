@@ -11,6 +11,7 @@ data class EditRuleUiState(
     val filters: List<Filter> = listOf(Filter("", MatchType.CONTAINS)),
     val logicalOperator: LogicalOperator = LogicalOperator.AND,
     val targetPackage: String? = null,
+    val isCleanUrl: Boolean = false,
     val isTransformEnabled: Boolean = false,
     val replacePattern: String = "",
     val replacement: String = "",
@@ -55,6 +56,10 @@ sealed class EditRuleEvent {
     ) : EditRuleEvent()
 
     data class TransformEnabledChanged(
+        val enabled: Boolean,
+    ) : EditRuleEvent()
+
+    data class CleanUrlChanged(
         val enabled: Boolean,
     ) : EditRuleEvent()
 
