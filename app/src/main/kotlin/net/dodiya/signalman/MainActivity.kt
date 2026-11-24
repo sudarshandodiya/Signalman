@@ -32,12 +32,16 @@ import net.dodiya.signalman.ui.RuleViewModel
 import net.dodiya.signalman.ui.SettingsViewModel
 import net.dodiya.signalman.ui.editrule.EditRuleScreen
 import net.dodiya.signalman.ui.editrule.EditRuleViewModel
+import net.dodiya.signalman.ui.extractSharedUrl
 import net.dodiya.signalman.ui.rulelist.RuleListScreen
 import net.dodiya.signalman.ui.theme.SignalmanTheme
 import org.koin.androidx.compose.koinViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+
+private fun httpUri(uri: Uri?): Uri? =
+    uri?.takeIf { it.scheme.equals("http", ignoreCase = true) || it.scheme.equals("https", ignoreCase = true) }
 
 class MainActivity : ComponentActivity() {
     private val viewModel: RuleViewModel by viewModel()
@@ -51,7 +55,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (intent?.action != Intent.ACTION_VIEW) {
+        if (intent?.action != Intent.ACTION_VIEW && intent?.action != Intent.ACTION_SEND) {
             setTheme(R.style.Theme_Signalman)
         }
         super.onCreate(savedInstanceState)
@@ -66,25 +70,33 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val intentData: Uri? = intent.data
-        when {
-            intent.action == Intent.ACTION_VIEW && intentData != null -> {
-                startRoutingTimeout()
-                routingViewModel.handleIncomingUrl(intentData)
+        val incomingUrl =
+            when (intent.action) {
+                Intent.ACTION_VIEW -> httpUri(intent.data)
+                Intent.ACTION_SEND ->
+                    httpUri(intent.data)
+                        ?: extractSharedUrl(intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString())
+                            ?.let { Uri.parse(it) }
+                            ?.let(::httpUri)
+                else -> null
             }
-            else -> {
-                // Launcher launch (or an intent we cannot route): show the main UI.
-                routingTimeoutJob?.cancel()
-                routingTimeoutJob = null
-                showUi()
-            }
+
+        if (incomingUrl != null) {
+            startRoutingTimeout()
+            routingViewModel.handleIncomingUrl(incomingUrl)
+            return
         }
+
+        // Launcher launch (or a share that did not contain a URL): show the main UI.
+        routingTimeoutJob?.cancel()
+        routingTimeoutJob = null
+        showUi()
     }
 
     /**
      * Collects routing events for the whole activity lifetime so that URLs delivered
-     * via [onNewIntent] (singleTop) are never dropped, regardless of whether the
-     * activity was started from the launcher or from a URL click.
+     * via [onNewIntent] (singleTop) are never dropped, whether the activity was started
+     * from the launcher, a URL click, or the system share sheet.
      */
     private fun observeRoutingEvents() {
         lifecycleScope.launch {

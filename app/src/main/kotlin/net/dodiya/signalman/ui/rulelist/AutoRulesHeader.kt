@@ -12,7 +12,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +28,10 @@ import androidx.compose.ui.unit.dp
 import net.dodiya.signalman.R
 import net.dodiya.signalman.data.AppInfo
 
+/**
+ * Auto-rule preferences. The section header and outer container are supplied by
+ * [net.dodiya.signalman.ui.settings.SettingsSection] so every settings group looks the same.
+ */
 @Composable
 fun AutoRulesHeader(
     isAutoEnabled: Boolean,
@@ -40,45 +44,54 @@ fun AutoRulesHeader(
     var showAppPicker by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    Column(modifier = modifier.padding(16.dp)) {
+    Column(modifier = modifier.padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.auto_enable_title), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    stringResource(R.string.auto_enable_subtitle),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
+                    text = stringResource(R.string.auto_enable_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = stringResource(R.string.auto_enable_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Switch(checked = isAutoEnabled, onCheckedChange = onAutoEnabledChange)
         }
 
         if (!isAutoEnabled) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(stringResource(R.string.fallback_action), style = MaterialTheme.typography.labelLarge)
-
+            Spacer(modifier = Modifier.height(20.dp))
             val selectedAppName =
                 installedApps.find { it.packageName == globalDefault }?.name
                     ?: context.getString(R.string.system_chooser_none)
 
-            OutlinedCard(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .clickable { showAppPicker = true },
+            Surface(
+                modifier = Modifier.fillMaxWidth().clickable { showAppPicker = true },
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.default_app), style = MaterialTheme.typography.labelSmall)
-                        Text(selectedAppName, style = MaterialTheme.typography.bodyLarge)
+                        Text(
+                            text = stringResource(R.string.default_app),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = selectedAppName,
+                            style = MaterialTheme.typography.titleMedium,
+                        )
                     }
                     if (globalDefault != null) {
                         IconButton(onClick = { onSelectDefault(null) }) {
-                            Icon(Icons.Default.Clear, contentDescription = context.getString(R.string.cd_clear_default))
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = context.getString(R.string.cd_clear_default),
+                            )
                         }
                     }
                 }

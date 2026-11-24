@@ -32,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -141,9 +140,17 @@ fun ConditionsSection(
                     trailingIcon = {
                         if (filterPasses != null) {
                             Icon(
-                                if (filterPasses) Icons.Default.CheckCircle else Icons.Default.Error,
-                                contentDescription = null,
-                                tint = if (filterPasses) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                imageVector = if (filterPasses) Icons.Default.CheckCircle else Icons.Default.Error,
+                                contentDescription =
+                                    stringResource(
+                                        if (filterPasses) R.string.cd_filter_matches else R.string.cd_filter_no_match,
+                                    ),
+                                tint =
+                                    if (filterPasses) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.error
+                                    },
                                 modifier = Modifier.size(20.dp),
                             )
                         }

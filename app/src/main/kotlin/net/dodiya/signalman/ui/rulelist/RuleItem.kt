@@ -1,6 +1,5 @@
 package net.dodiya.signalman.ui.rulelist
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,10 +9,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,8 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.dodiya.signalman.R
 import net.dodiya.signalman.data.Rule
@@ -41,80 +40,91 @@ fun RuleItem(
 ) {
     val context = LocalContext.current
     val filter = rule.filters.firstOrNull()
+    val contentColor =
+        if (rule.isEnabled) {
+            MaterialTheme.colorScheme.onSurface
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    val secondaryColor =
+        if (rule.isEnabled) {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        } else {
+            MaterialTheme.colorScheme.outline
+        }
 
     Card(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-                .clickable { onEdit() },
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+        onClick = onEdit,
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Row(
             modifier =
                 Modifier
-                    .padding(start = 16.dp, top = 12.dp, bottom = 12.dp, end = 8.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, top = 16.dp, bottom = 16.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp)
-                        .alpha(if (rule.isEnabled) 1f else 0.5f),
-            ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = rule.name,
                         style = MaterialTheme.typography.titleMedium,
+                        color = contentColor,
                         maxLines = 1,
                         modifier = Modifier.weight(1f, fill = false),
                     )
                     if (filter != null) {
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             imageVector = matchTypeIcon(filter.matchType),
                             contentDescription = filter.matchType.userFriendlyName,
                             modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.outline,
+                            tint = secondaryColor,
                         )
                     }
                 }
 
                 val badges =
                     buildList {
-                        if (hasTransform(rule)) add(context.getString(R.string.badge_transform))
-                        if (rule.isCleanUrl) add(context.getString(R.string.badge_clean))
+                        if (hasTransform(rule)) add(stringResource(R.string.badge_transform))
+                        if (rule.isCleanUrl) add(stringResource(R.string.badge_clean))
                     }
                 if (badges.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         badges.forEach { badge ->
                             Surface(
-                                shape = RoundedCornerShape(6.dp),
+                                shape = MaterialTheme.shapes.extraSmall,
                                 color = MaterialTheme.colorScheme.secondaryContainer,
                             ) {
                                 Text(
                                     text = badge,
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 )
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = filter?.pattern ?: context.getString(R.string.no_pattern),
-                    style = MaterialTheme.typography.bodySmall,
+                    text = filter?.pattern ?: stringResource(R.string.no_pattern),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = secondaryColor,
                     maxLines = 1,
-                    color = MaterialTheme.colorScheme.outline,
                 )
                 Text(
-                    text = "→ ${rule.targetPackage ?: context.getString(R.string.system_chooser)}",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = stringResource(R.string.rule_target_label, rule.targetPackage ?: stringResource(R.string.system_chooser)),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = secondaryColor,
+                    maxLines = 1,
                 )
             }
 
@@ -125,7 +135,7 @@ fun RuleItem(
                 )
                 IconButton(onClick = onDelete) {
                     Icon(
-                        Icons.Default.Delete,
+                        imageVector = Icons.Default.Delete,
                         contentDescription = context.getString(R.string.action_delete),
                         tint = MaterialTheme.colorScheme.error,
                     )
