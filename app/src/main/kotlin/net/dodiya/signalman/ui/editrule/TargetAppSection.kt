@@ -92,6 +92,7 @@ fun TargetAppSection(
                     packageName = app.packageName,
                     isSelected = app.packageName == targetPackage,
                     onClick = { onEvent(EditRuleEvent.TargetPackageChanged(app.packageName)) },
+                    icon = app.icon,
                 )
             }
         }

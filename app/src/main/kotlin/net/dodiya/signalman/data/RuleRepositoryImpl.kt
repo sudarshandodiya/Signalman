@@ -30,7 +30,7 @@ class RuleRepositoryImpl(
     }
 
     override suspend fun insertAll(rules: List<Rule>) {
-        rules.forEach { ruleDao.insertRule(it) }
+        ruleDao.insertRules(rules)
     }
 
     override suspend fun update(rule: Rule) {

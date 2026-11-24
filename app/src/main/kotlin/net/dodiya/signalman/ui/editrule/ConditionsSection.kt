@@ -6,21 +6,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -36,8 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -45,11 +39,14 @@ import net.dodiya.signalman.R
 import net.dodiya.signalman.data.Filter
 import net.dodiya.signalman.data.LogicalOperator
 import net.dodiya.signalman.data.MatchType
+import net.dodiya.signalman.ui.components.matchTypeIcon
 import net.dodiya.signalman.ui.editrule.EditRuleEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConditionsSection(
+    name: String,
+    onNameChange: (String) -> Unit,
     filters: List<Filter>,
     onEvent: (EditRuleEvent) -> Unit,
     logicalOperator: LogicalOperator,
@@ -64,6 +61,16 @@ fun ConditionsSection(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState()),
     ) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text(stringResource(R.string.rule_name_label)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         if (filters.size > 1) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -101,7 +108,7 @@ fun ConditionsSection(
                         androidx.compose.foundation.layout.Box {
                             IconButton(onClick = { expanded = true }) {
                                 Icon(
-                                    imageVector = getMatchTypeIcon(filter.matchType),
+                                    imageVector = matchTypeIcon(filter.matchType),
                                     contentDescription = filter.matchType.userFriendlyName,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp),
@@ -116,7 +123,7 @@ fun ConditionsSection(
                                         text = { Text(type.userFriendlyName) },
                                         leadingIcon = {
                                             Icon(
-                                                getMatchTypeIcon(type),
+                                                matchTypeIcon(type),
                                                 contentDescription = null,
                                                 modifier = Modifier.size(18.dp),
                                             )
@@ -133,9 +140,17 @@ fun ConditionsSection(
                     trailingIcon = {
                         if (filterPasses != null) {
                             Icon(
-                                if (filterPasses) Icons.Default.CheckCircle else Icons.Default.Error,
-                                contentDescription = null,
-                                tint = if (filterPasses) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                                imageVector = if (filterPasses) Icons.Default.CheckCircle else Icons.Default.Error,
+                                contentDescription =
+                                    stringResource(
+                                        if (filterPasses) R.string.cd_filter_matches else R.string.cd_filter_no_match,
+                                    ),
+                                tint =
+                                    if (filterPasses) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.error
+                                    },
                                 modifier = Modifier.size(20.dp),
                             )
                         }
@@ -166,12 +181,3 @@ fun ConditionsSection(
         }
     }
 }
-
-private fun getMatchTypeIcon(type: MatchType): ImageVector =
-    when (type) {
-        MatchType.CONTAINS -> Icons.Default.Language
-        MatchType.EQUALS -> Icons.Default.TextFields
-        MatchType.STARTS_WITH -> Icons.AutoMirrored.Filled.KeyboardArrowRight
-        MatchType.ENDS_WITH -> Icons.AutoMirrored.Filled.KeyboardArrowLeft
-        MatchType.REGEX -> Icons.Default.Code
-    }

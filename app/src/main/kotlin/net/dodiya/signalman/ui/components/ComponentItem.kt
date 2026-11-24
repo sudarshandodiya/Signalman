@@ -22,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import net.dodiya.signalman.R
 import net.dodiya.signalman.ui.components.dialog.EditValueDialog
@@ -43,7 +42,7 @@ fun ComponentItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(label, style = MaterialTheme.typography.titleMedium)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = originalValue,
@@ -61,9 +60,8 @@ fun ComponentItem(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = replacementValue,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
                     )
                 }
             }

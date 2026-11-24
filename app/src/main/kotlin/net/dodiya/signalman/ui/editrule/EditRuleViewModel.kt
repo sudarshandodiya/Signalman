@@ -5,6 +5,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -12,12 +13,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.dodiya.signalman.data.AppInfoRepository
 import net.dodiya.signalman.data.Filter
 import net.dodiya.signalman.data.MatchType
 import net.dodiya.signalman.data.Rule
 import net.dodiya.signalman.data.RuleRepository
 import net.dodiya.signalman.data.TransformMode
+import net.dodiya.signalman.domain.CleanUrlUseCase
 import net.dodiya.signalman.domain.MatchRuleUseCase
 import net.dodiya.signalman.domain.TransformUrlUseCase
 
@@ -26,6 +29,7 @@ class EditRuleViewModel(
     private val repository: RuleRepository,
     private val matchRuleUseCase: MatchRuleUseCase,
     private val transformUrlUseCase: TransformUrlUseCase,
+    private val cleanUrlUseCase: CleanUrlUseCase,
     private val appInfoRepository: AppInfoRepository,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -58,6 +62,7 @@ class EditRuleViewModel(
             viewModelScope.launch {
                 repository.getRule(ruleId)?.let { rule ->
                     extractRuleData(rule)
+                    stateManager.validateAndSetSaveEnabled()
                     updatePreview()
                 }
             }
@@ -68,15 +73,25 @@ class EditRuleViewModel(
                     exampleUrl = initialExampleUrl ?: "",
                 )
             }
+            stateManager.validateAndSetSaveEnabled()
             updatePreview()
         }
     }
 
     private fun extractRuleData(rule: Rule) {
+        // The UI and the data model use opposite names for the transform modes:
+        //   - UI "Simple" tab edits URL components      → stored as TransformMode.Advanced
+        //   - UI "Regex" tab edits pattern/substitution → stored as TransformMode.Simple
+        // Translate here so the editor opens on the correct tab with the right values.
         val (replacePattern, replacement, urlComponentReplacements) =
             when (val tm = rule.transformMode) {
                 is TransformMode.Simple -> Triple(tm.replacePattern, tm.replacement, emptyList())
                 is TransformMode.Advanced -> Triple("", "", tm.urlComponentReplacements)
+            }
+        val uiTransformMode =
+            when (rule.transformMode) {
+                is TransformMode.Simple -> TransformMode.Advanced()
+                is TransformMode.Advanced -> TransformMode.Simple()
             }
         val isTransformEnabled =
             when (val tm = rule.transformMode) {
@@ -89,16 +104,18 @@ class EditRuleViewModel(
                 filters = rule.filters.ifEmpty { listOf(Filter("", MatchType.CONTAINS)) },
                 logicalOperator = rule.logicalOperator,
                 targetPackage = rule.targetPackage,
+                isCleanUrl = rule.isCleanUrl,
                 isTransformEnabled = isTransformEnabled,
                 replacePattern = replacePattern,
                 replacement = replacement,
                 urlComponentReplacements = urlComponentReplacements,
-                transformMode = rule.transformMode,
+                transformMode = uiTransformMode,
                 exampleUrl = rule.exampleUrl ?: initialExampleUrl ?: "",
             )
         }
     }
 
+    @Suppress("CyclomaticComplexMethod")
     fun onEvent(event: EditRuleEvent) {
         when (event) {
             is EditRuleEvent.NameChanged -> handleNameChanged(event.name)
@@ -109,6 +126,7 @@ class EditRuleViewModel(
             is EditRuleEvent.FilterRemoved -> handleFilterRemoved(event.index)
             is EditRuleEvent.LogicalOperatorChanged -> handleLogicalOperatorChanged(event.operator)
             is EditRuleEvent.TransformEnabledChanged -> handleTransformEnabledChanged(event.enabled)
+            is EditRuleEvent.CleanUrlChanged -> handleCleanUrlChanged(event.enabled)
             is EditRuleEvent.ReplacePatternChanged -> handleReplacePatternChanged(event.pattern)
             is EditRuleEvent.ReplacementChanged -> handleReplacementChanged(event.replacement)
             is EditRuleEvent.UrlComponentReplacementChanged -> handleUrlComponentReplacementChanged(event.replacement)
@@ -163,6 +181,11 @@ class EditRuleViewModel(
 
     private fun handleTransformEnabledChanged(enabled: Boolean) {
         stateManager.updateTransformConfig(enabled = enabled)
+        updatePreview()
+    }
+
+    private fun handleCleanUrlChanged(enabled: Boolean) {
+        _uiState.update { it.copy(isCleanUrl = enabled) }
         updatePreview()
     }
 
@@ -223,13 +246,30 @@ class EditRuleViewModel(
         isMatch: Boolean,
         rule: Rule,
     ): String? {
-        if (!state.isTransformEnabled || !isMatch) return null
-        val transformMode =
-            when (state.transformMode) {
-                is TransformMode.Simple -> TransformMode.Simple(replacePattern = state.replacePattern, replacement = state.replacement)
-                is TransformMode.Advanced -> TransformMode.Advanced(urlComponentReplacements = state.urlComponentReplacements)
+        if (!isMatch || (!state.isTransformEnabled && !state.isCleanUrl)) return null
+
+        val cleanedUri =
+            if (state.isCleanUrl) {
+                cleanUrlUseCase(state.exampleUrl.toUri())
+            } else {
+                state.exampleUrl.toUri()
             }
-        return transformUrlUseCase(state.exampleUrl.toUri(), rule.copy(transformMode = transformMode)).toString()
+        val finalUri =
+            if (state.isTransformEnabled) {
+                val transformMode =
+                    when (state.transformMode) {
+                        // UI "Simple" tab edits URL components → runtime Advanced (per-component replacement).
+                        is TransformMode.Simple ->
+                            TransformMode.Advanced(urlComponentReplacements = state.urlComponentReplacements)
+                        // UI "Regex" tab edits pattern/substitution → runtime Simple (string replacement).
+                        is TransformMode.Advanced ->
+                            TransformMode.Simple(replacePattern = state.replacePattern, replacement = state.replacement)
+                    }
+                transformUrlUseCase(cleanedUri, rule.copy(transformMode = transformMode))
+            } else {
+                cleanedUri
+            }
+        return finalUri.toString()
     }
 
     private fun saveRule() {
@@ -237,15 +277,12 @@ class EditRuleViewModel(
             val state = _uiState.value
             val transformMode =
                 when (state.transformMode) {
+                    // UI "Simple" tab edits URL components → runtime Advanced (per-component replacement).
                     is TransformMode.Simple ->
-                        TransformMode.Simple(
-                            replacePattern = state.replacePattern,
-                            replacement = state.replacement,
-                        )
+                        TransformMode.Advanced(urlComponentReplacements = state.urlComponentReplacements)
+                    // UI "Regex" tab edits pattern/substitution → runtime Simple (string replacement).
                     is TransformMode.Advanced ->
-                        TransformMode.Advanced(
-                            urlComponentReplacements = state.urlComponentReplacements,
-                        )
+                        TransformMode.Simple(replacePattern = state.replacePattern, replacement = state.replacement)
                 }
             val rule =
                 Rule(
@@ -254,13 +291,18 @@ class EditRuleViewModel(
                     filters = state.filters,
                     logicalOperator = state.logicalOperator,
                     targetPackage = state.targetPackage ?: "",
+                    isCleanUrl = state.isCleanUrl,
                     transformMode = transformMode,
                     exampleUrl = state.exampleUrl.ifEmpty { null },
                 )
-            if (ruleId == -1) {
-                repository.insert(rule)
-            } else {
-                repository.update(rule)
+            // The editor navigates back immediately after firing SaveRule; make sure the
+            // database write survives the ViewModel being cleared on popBackStack.
+            withContext(NonCancellable) {
+                if (ruleId == -1) {
+                    repository.insert(rule)
+                } else {
+                    repository.update(rule)
+                }
             }
         }
     }

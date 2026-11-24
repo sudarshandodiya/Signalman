@@ -17,3 +17,5 @@ local.properties
 *.jks
 /.kotlin/
 .agents/skills/
+/skills/
+/.pi/

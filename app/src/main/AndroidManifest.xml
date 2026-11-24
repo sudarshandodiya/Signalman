@@ -55,6 +55,25 @@
                 <data android:scheme="http" />
                 <data android:scheme="https" />
             </intent-filter>
+
+            <!-- Share sheet: URLs shared as plain text from any app -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <!-- Some apps also attach the URL as the intent data URI -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="http" android:mimeType="text/plain" />
+                <data android:scheme="https" android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
     </application>
 

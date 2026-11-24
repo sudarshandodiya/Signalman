@@ -23,6 +23,7 @@ class PreferenceManager(
         private val KEY_GLOBAL_DEFAULT_PACKAGE = stringPreferencesKey("global_default_package")
         private val KEY_AUTO_RULE_GENERATION_ENABLED = booleanPreferencesKey("auto_rule_generation_enabled")
         private val KEY_HIDDEN_BROWSERS = stringSetPreferencesKey("hidden_browsers")
+        private val KEY_CLEAN_URLS_ENABLED = booleanPreferencesKey("clean_urls_enabled")
     }
 
     val hiddenBrowsers: Flow<Set<String>> =
@@ -55,6 +56,14 @@ class PreferenceManager(
                 preferences[KEY_AUTO_RULE_GENERATION_ENABLED] ?: true
             }
 
+    val isCleanUrlsEnabled: Flow<Boolean> =
+        context.dataStore.data
+            .catch { exception ->
+                if (exception is IOException) emit(emptyPreferences()) else throw exception
+            }.map { preferences ->
+                preferences[KEY_CLEAN_URLS_ENABLED] ?: false
+            }
+
     suspend fun setGlobalDefault(packageName: String?) {
         context.dataStore.edit { preferences ->
             if (packageName == null) {
@@ -68,6 +77,12 @@ class PreferenceManager(
     suspend fun setAutoRuleGenerationEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[KEY_AUTO_RULE_GENERATION_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setCleanUrlsEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_CLEAN_URLS_ENABLED] = enabled
         }
     }
 }

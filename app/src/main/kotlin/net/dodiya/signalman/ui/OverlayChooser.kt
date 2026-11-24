@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,19 +25,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import net.dodiya.signalman.R
 import net.dodiya.signalman.data.Rule
+import net.dodiya.signalman.ui.components.ExpressiveSectionHeader
 import net.dodiya.signalman.ui.overlay.AppRow
 
-@Suppress("UNUSED_PARAMETER")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverlayChooser(
@@ -49,59 +51,79 @@ fun OverlayChooser(
 ) {
     val context = LocalContext.current
     val pm = context.packageManager
-
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = MaterialTheme.shapes.extraLarge,
     ) {
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 24.dp),
         ) {
             Text(
-                text = context.getString(R.string.title_signalman),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
+                text = stringResource(R.string.title_signalman),
+                style = MaterialTheme.typography.headlineMedium,
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
-                Text(
-                    text = uri.toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(
-                    onClick = {
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText(context.getString(R.string.url_clipboard_label), uri.toString())
-                        clipboard.setPrimaryClip(clip)
-                    },
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
                 ) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = context.getString(R.string.action_copy))
-                }
-                IconButton(
-                    onClick = {
-                        val shareIntent =
-                            Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, uri.toString())
-                            }
-                        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_url_title)))
-                    },
-                ) {
-                    Icon(Icons.Default.Share, contentDescription = context.getString(R.string.action_share))
+                    Text(
+                        text = uri.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip =
+                                ClipData.newPlainText(
+                                    context.getString(R.string.url_clipboard_label),
+                                    uri.toString(),
+                                )
+                            clipboard.setPrimaryClip(clip)
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = stringResource(R.string.action_copy),
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            val shareIntent =
+                                Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, uri.toString())
+                                }
+                            context.startActivity(
+                                Intent.createChooser(shareIntent, context.getString(R.string.share_url_title)),
+                            )
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = stringResource(R.string.action_share),
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             LazyColumn(
                 modifier =
@@ -112,39 +134,40 @@ fun OverlayChooser(
             ) {
                 if (matchedRules.isNotEmpty()) {
                     item {
-                        Text(
-                            context.getString(R.string.suggested_rules),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
+                        ExpressiveSectionHeader(
+                            title = stringResource(R.string.suggested_rules),
+                            icon = Icons.Default.AutoAwesome,
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                     items(matchedRules) { rule ->
                         AppRow(
                             name = rule.name,
-                            pkg = rule.targetPackage ?: context.getString(R.string.system),
+                            pkg = rule.targetPackage ?: stringResource(R.string.system),
                             isSelected = false,
+                            isSuggestion = true,
                             onClick = { onRuleSelection(rule) },
                         )
                     }
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
-                        HorizontalDivider()
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
 
                 item {
-                    Text(context.getString(R.string.apps_can_open), style = MaterialTheme.typography.labelLarge)
+                    ExpressiveSectionHeader(title = stringResource(R.string.apps_can_open))
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                items(browserActivities) { res ->
-                    val pkg = res.activityInfo.packageName
+                items(browserActivities) { resolveInfo ->
+                    val pkg = resolveInfo.activityInfo.packageName
                     AppRow(
-                        name = res.loadLabel(pm).toString(),
+                        name = resolveInfo.loadLabel(pm).toString(),
                         pkg = pkg,
                         isSelected = false,
+                        icon = resolveInfo.loadIcon(pm),
                         onClick = {
                             val intent =
                                 Intent(Intent.ACTION_VIEW, uri).apply {
@@ -159,22 +182,27 @@ fun OverlayChooser(
 
                 if (browserActivities.isEmpty()) {
                     item {
-                        Text(
-                            context.getString(R.string.no_apps_found),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.outline,
-                            modifier = Modifier.padding(vertical = 16.dp),
-                        )
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.errorContainer,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.no_apps_found),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(16.dp),
+                            )
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
             Text(
-                text = "Tip: Long press an app to always open this domain with it.",
+                text = stringResource(R.string.overlay_tip),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
         }

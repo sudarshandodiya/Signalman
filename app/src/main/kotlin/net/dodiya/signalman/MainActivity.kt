@@ -21,6 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.dodiya.signalman.ui.ImportExportScreen
@@ -31,6 +32,7 @@ import net.dodiya.signalman.ui.RuleViewModel
 import net.dodiya.signalman.ui.SettingsViewModel
 import net.dodiya.signalman.ui.editrule.EditRuleScreen
 import net.dodiya.signalman.ui.editrule.EditRuleViewModel
+import net.dodiya.signalman.ui.extractSharedUrl
 import net.dodiya.signalman.ui.rulelist.RuleListScreen
 import net.dodiya.signalman.ui.theme.SignalmanTheme
 import org.koin.androidx.compose.koinViewModel
@@ -38,9 +40,14 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+private fun httpUri(uri: Uri?): Uri? =
+    uri?.takeIf { it.scheme.equals("http", ignoreCase = true) || it.scheme.equals("https", ignoreCase = true) }
+
 class MainActivity : ComponentActivity() {
     private val viewModel: RuleViewModel by viewModel()
     private val routingViewModel: RoutingViewModel by viewModel()
+
+    private var routingTimeoutJob: Job? = null
 
     companion object {
         private const val TAG = "MainActivity"
@@ -48,12 +55,11 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (intent?.action != Intent.ACTION_VIEW) {
+        if (intent?.action != Intent.ACTION_VIEW && intent?.action != Intent.ACTION_SEND) {
             setTheme(R.style.Theme_Signalman)
         }
         super.onCreate(savedInstanceState)
-        val isRoutingIntent = intent?.action == Intent.ACTION_VIEW
-        observeRoutingEvents(hasTimeout = isRoutingIntent)
+        observeRoutingEvents()
         handleIntent(intent)
     }
 
@@ -64,38 +70,60 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        val intentData: Uri? = intent.data
-        if (intent.action == Intent.ACTION_VIEW && intentData != null) {
-            routingViewModel.handleIncomingUrl(intentData)
+        val incomingUrl =
+            when (intent.action) {
+                Intent.ACTION_VIEW -> httpUri(intent.data)
+                Intent.ACTION_SEND ->
+                    httpUri(intent.data)
+                        ?: extractSharedUrl(intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString())
+                            ?.let { Uri.parse(it) }
+                            ?.let(::httpUri)
+                else -> null
+            }
+
+        if (incomingUrl != null) {
+            startRoutingTimeout()
+            routingViewModel.handleIncomingUrl(incomingUrl)
+            return
+        }
+
+        // Launcher launch (or a share that did not contain a URL): show the main UI.
+        routingTimeoutJob?.cancel()
+        routingTimeoutJob = null
+        showUi()
+    }
+
+    /**
+     * Collects routing events for the whole activity lifetime so that URLs delivered
+     * via [onNewIntent] (singleTop) are never dropped, whether the activity was started
+     * from the launcher, a URL click, or the system share sheet.
+     */
+    private fun observeRoutingEvents() {
+        lifecycleScope.launch {
+            routingViewModel.events.collect { event ->
+                routingTimeoutJob?.cancel()
+                routingTimeoutJob = null
+                when (event) {
+                    is RoutingEvent.RouteToApp -> {
+                        routeUrl(event.uri, event.targetPackage)
+                        finish()
+                    }
+                    is RoutingEvent.ShowOverlay -> {
+                        showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
+                    }
+                    RoutingEvent.Finish -> finish()
+                }
+            }
         }
     }
 
-    private fun observeRoutingEvents(hasTimeout: Boolean) {
-        lifecycleScope.launch {
-            if (hasTimeout) {
-                val timeoutJob =
-                    launch {
-                        delay(ROUTING_TIMEOUT_MS)
-                        showUi()
-                    }
-
-                routingViewModel.events.collect { event ->
-                    timeoutJob.cancel()
-                    when (event) {
-                        is RoutingEvent.RouteToApp -> {
-                            routeUrl(event.uri, event.targetPackage)
-                            finish()
-                        }
-                        is RoutingEvent.ShowOverlay -> {
-                            showOverlayUi(event.uri, event.matchedRules, event.hiddenBrowsers)
-                        }
-                        RoutingEvent.Finish -> finish()
-                    }
-                }
-            } else {
+    private fun startRoutingTimeout() {
+        routingTimeoutJob?.cancel()
+        routingTimeoutJob =
+            lifecycleScope.launch {
+                delay(ROUTING_TIMEOUT_MS)
                 showUi()
             }
-        }
     }
 
     private fun routeUrl(

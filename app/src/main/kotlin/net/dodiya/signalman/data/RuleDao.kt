@@ -19,6 +19,9 @@ interface RuleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRule(rule: Rule)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRules(rules: List<Rule>)
+
     @Update
     suspend fun updateRule(rule: Rule)
 

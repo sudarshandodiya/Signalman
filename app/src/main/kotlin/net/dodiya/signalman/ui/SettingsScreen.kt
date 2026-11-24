@@ -1,6 +1,8 @@
 package net.dodiya.signalman.ui
 
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -11,12 +13,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Language
@@ -30,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -42,11 +45,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.dodiya.signalman.R
 import net.dodiya.signalman.ui.settings.SettingsClickableItem
+import net.dodiya.signalman.ui.settings.SettingsSection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +60,6 @@ fun SettingsScreen(
     onNavigateToImportExport: () -> Unit,
     viewModel: SettingsViewModel,
 ) {
-    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val importExportState by viewModel.importExportState.collectAsStateWithLifecycle()
     val pendingImportRules by viewModel.pendingImportRules.collectAsStateWithLifecycle()
@@ -83,10 +87,18 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(context.getString(R.string.title_settings), fontWeight = FontWeight.SemiBold) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.title_settings),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = context.getString(R.string.action_back))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
             )
@@ -111,9 +123,9 @@ fun SettingsContent(
     val pm = context.packageManager
     val importExportState by viewModel.importExportState.collectAsStateWithLifecycle()
 
-    val browserIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("http://"))
     val allBrowsers =
         remember {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("http://"))
             pm
                 .queryIntentActivities(browserIntent, PackageManager.MATCH_ALL)
                 .filter { it.activityInfo.packageName != context.packageName }
@@ -122,7 +134,19 @@ fun SettingsContent(
         }
 
     val hiddenBrowsers by viewModel.hiddenBrowsers.collectAsStateWithLifecycle()
+    val isCleanUrlsEnabled by viewModel.isCleanUrlsEnabled.collectAsStateWithLifecycle()
     var showBrowserDialog by remember { mutableStateOf(false) }
+    val versionName =
+        remember(context) {
+            try {
+                context.packageManager
+                    .getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+                    .versionName
+                    .orEmpty()
+            } catch (_: PackageManager.NameNotFoundException) {
+                ""
+            }
+        }
 
     val exportLauncher =
         rememberLauncherForActivityResult(
@@ -146,58 +170,77 @@ fun SettingsContent(
         }
     }
 
-    LazyColumn(
-        modifier =
-            modifier
-                .fillMaxSize(),
-    ) {
-        val settingsItems =
-            listOf(
-                Triple(
-                    context.getString(R.string.export_rules_title),
-                    context.getString(R.string.export_rules_subtitle),
-                    Icons.Default.FileUpload,
-                ) to { exportLauncher.launch("signalman_rules.json") },
-                Triple(
-                    context.getString(R.string.import_rules_title),
-                    context.getString(R.string.import_rules_subtitle),
-                    Icons.Default.FileDownload,
-                ) to { importLauncher.launch(arrayOf("application/json")) },
-                Triple(
-                    context.getString(R.string.browser_visibility_title),
-                    context.getString(R.string.browser_visibility_subtitle),
-                    Icons.Default.Language,
-                ) to { showBrowserDialog = true },
-            )
-
-        items(settingsItems.size) { index ->
-            val (triple, onClick) = settingsItems[index]
-            val (title, subtitle, icon) = triple
-            SettingsClickableItem(
-                title = title,
-                subtitle = subtitle,
-                icon = icon,
-                onClick = onClick,
-                isLastItem = index == settingsItems.size - 1,
-            )
+    LazyColumn(modifier = modifier.fillMaxSize()) {
+        item {
+            SettingsSection(title = stringResource(R.string.section_general)) {
+                SettingsClickableItem(
+                    title = stringResource(R.string.clean_urls_title),
+                    subtitle = stringResource(R.string.clean_urls_subtitle),
+                    icon = Icons.Default.CleaningServices,
+                    onClick = { viewModel.setCleanUrlsEnabled(!isCleanUrlsEnabled) },
+                    isLastItem = true,
+                    trailing = {
+                        Switch(
+                            checked = isCleanUrlsEnabled,
+                            onCheckedChange = { viewModel.setCleanUrlsEnabled(it) },
+                        )
+                    },
+                )
+            }
         }
-
+        item {
+            SettingsSection(title = stringResource(R.string.section_browsers)) {
+                SettingsClickableItem(
+                    title = stringResource(R.string.browser_visibility_title),
+                    subtitle = stringResource(R.string.browser_visibility_subtitle),
+                    icon = Icons.Default.Language,
+                    onClick = { showBrowserDialog = true },
+                    isLastItem = true,
+                )
+            }
+        }
+        item {
+            SettingsSection(title = stringResource(R.string.section_data)) {
+                SettingsClickableItem(
+                    title = stringResource(R.string.export_rules_title),
+                    subtitle = stringResource(R.string.export_rules_subtitle),
+                    icon = Icons.Default.FileUpload,
+                    onClick = { exportLauncher.launch("signalman_rules.json") },
+                )
+                SettingsClickableItem(
+                    title = stringResource(R.string.import_rules_title),
+                    subtitle = stringResource(R.string.import_rules_subtitle),
+                    icon = Icons.Default.FileDownload,
+                    onClick = { importLauncher.launch(arrayOf("application/json")) },
+                    isLastItem = true,
+                )
+            }
+        }
         if (importExportState is ImportExportState.Loading) {
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.Center,
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator()
                 }
             }
+        }
+        item {
+            Text(
+                text = stringResource(R.string.about_footer, versionName),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 28.dp),
+            )
         }
     }
 
     if (showBrowserDialog) {
         AlertDialog(
             onDismissRequest = { showBrowserDialog = false },
-            title = { Text(context.getString(R.string.title_browser_visibility)) },
+            title = { Text(stringResource(R.string.title_browser_visibility)) },
             text = {
                 LazyColumn {
                     items(allBrowsers) { resolveInfo ->
@@ -215,7 +258,7 @@ fun SettingsContent(
                                                 hiddenBrowsers - pkg
                                             }
                                         viewModel.setHiddenBrowsers(newHidden)
-                                    }.padding(vertical = 8.dp),
+                                    }.padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Checkbox(
@@ -230,16 +273,16 @@ fun SettingsContent(
                                     viewModel.setHiddenBrowsers(newHidden)
                                 },
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
                                     text = resolveInfo.loadLabel(pm).toString(),
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.titleMedium,
                                 )
                                 Text(
                                     text = pkg,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.outline,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
@@ -248,7 +291,7 @@ fun SettingsContent(
             },
             confirmButton = {
                 TextButton(onClick = { showBrowserDialog = false }) {
-                    Text(context.getString(R.string.action_close))
+                    Text(stringResource(R.string.action_close))
                 }
             },
         )
